@@ -1,0 +1,5 @@
+productName: snap
+server:
+    applicationConnectors:
+        - port: 7627
+          type: http
