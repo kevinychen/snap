@@ -167,8 +167,8 @@ function bindCenter(){
     numColumns = 1;
     vLast = hLast = false;
     html = document.documentElement;
-    initScrollTop = document.body.scrollTop;
-    initScrollLeft = document.body.scrollLeft;
+    initScrollTop = window.scrollY;
+    initScrollLeft = window.scrollX;
     clientH = html.clientHeight;
     clientW = html.clientWidth;
     isSelected = true;
@@ -176,20 +176,20 @@ function bindCenter(){
     var selTop = dragresize.elmY;
     var selW = dragresize.elmW;
     var selH = dragresize.elmH;
-    var offsetX = selLeft - document.body.scrollLeft;
-    var offsetY = selTop - document.body.scrollTop;
+    var offsetX = selLeft - window.scrollX;
+    var offsetY = selTop - window.scrollY;
     if (initScrollTop > selTop) {
       if (offsetX < 0) {
-        document.body.scrollLeft = selLeft;
+        window.scrollBy(selLeft - window.scrollX, 0);
       } else {
         wrapper.style.paddingRight = offsetX + "px";
-        document.body.scrollLeft += offsetX;
+        window.scrollBy(offsetX - window.scrollX, 0);
       }
       if (offsetY < 0) {
-        document.body.scrollTop = selTop;
+        window.scrollBy(0, selTop - window.scrollY);
       } else {
         wrapper.style.paddingTop = offsetY + "px";
-        document.body.scrollTop += offsetY;
+        window.scrollBy(0, offsetY - window.scrollY);
       }
     }
     getDocumentDimension();
