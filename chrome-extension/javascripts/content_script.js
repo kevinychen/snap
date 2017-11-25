@@ -153,13 +153,13 @@ function windowResize(){
 function bindCenter(){
   function onActionBarClick(a){
     switch (a.target.id) {
-      case "awesome_screenshot_capture": captureSelection(); break;
-      case "awesome_screenshot_capture_icon": captureSelection(); break;
+      case "awesome_screenshot_image_search": imageSearch(); break;
+      case "awesome_screenshot_image_search_icon": imageSearch(); break;
       case "awesome_screenshot_cancel": removeSelection(); break;
       case "awesome_screenshot_cancel_icon": removeSelection(); break;
     }
   }
-  function captureSelection() {
+  function imageSearch() {
     var a = document.getElementById("awesome_screenshot_size");
     setStyle(a, "display", "none");
     dragresize.deselect(c);
@@ -210,7 +210,7 @@ function bindCenter(){
       fixAndCapture();
     } else {
       removeSelection();
-      setTimeout(function(){sendRequest({action:"capture_selected_done",data:{x:offsetX,y:offsetY,w:selW,h:selH}})}, 100);
+      setTimeout(function(){sendRequest({action:"image_search_done",data:{x:offsetX,y:offsetY,w:selW,h:selH}})}, 100);
     }
   }
   var c=document.getElementById("awesome_screenshot_center");
@@ -470,8 +470,8 @@ var wrapperHTML =
   '  <div id="awesome_screenshot_center" class="drsElement drsMoveHandle">' +
   '    <div id="awesome_screenshot_size" style="min-width:70px;"><span>0 X 0</span></div>' +
   '    <div id="awesome_screenshot_action">' +
+  '      <a id="awesome_screenshot_image_search"><span id="awesome_screenshot_image_search_icon"></span>Image search</a>' +
   '      <a id="awesome_screenshot_cancel"><span id="awesome_screenshot_cancel_icon"></span>Cancel</a>' +
-  '      <a id="awesome_screenshot_capture"><span id="awesome_screenshot_capture_icon"></span>Capture</a>' +
   '    </div>' +
   '  </div>' +
   '</div>';

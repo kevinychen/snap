@@ -66,7 +66,11 @@ function prepareEditArea(req) {
   var scrollbarWidth = getScrollbarWidth();
   var n = 0;
   switch (req.type){
-    case "visible": {
+    case "visible":
+    case "image_search": {
+      if (req.type == "image_search") {
+        document.getElementById("overlay").style.display = "block";
+      }
       $("#save-image").attr({src:images[0]}).load(function(){
         if ("selected" == req.userAction) {
           editW = req.centerW;
@@ -105,6 +109,9 @@ function prepareEditArea(req) {
             imageWidth, imageHeight
         );
         $(this).unbind("load");
+        if (req.type == "image_search") {
+          redirectToImageSearch();
+        }
       });
       break;
     }

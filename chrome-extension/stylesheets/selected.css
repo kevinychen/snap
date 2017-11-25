@@ -68,12 +68,13 @@ div#awesome_screenshot_center {
 #awesome_screenshot_action {
 	display:none;
 	position:absolute; 
-	bottom:-30px; right:0;
-	width:210px;
+	bottom:0; right:-140px;
+	width:150px;
 }
 #awesome_screenshot_action a {
 	display: inline-block;
 	margin-left:20px;
+	margin-bottom:10px;
 	padding: 2px 8px 2px 6px;
 	height: 20px;
 	border-radius:6px;
@@ -87,7 +88,7 @@ div#awesome_screenshot_center {
 }
 #awesome_screenshot_action a:hover { background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#e5e5e5)); }
 #awesome_screenshot_action a:active { background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#e5e5e5), to(#ddd)); }
-a#awesome_screenshot_capture { font-size:13px; font-weight:bold; }
+a#awesome_screenshot_image_search { font-size:13px; font-weight:bold; }
 a#awesome_screenshot_cancel {font-size:13px;}
 
 #awesome_screenshot_action a span {
@@ -97,7 +98,7 @@ a#awesome_screenshot_cancel {font-size:13px;}
     background-repeat:no-repeat;
 	vertical-align:top;
 }
-#awesome_screenshot_capture span { 
+#awesome_screenshot_image_search span { 
 	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAu1JREFUeNqslF9IU2EUwM/97r95t7mpm+aoiIxELHrpL+KfhzIUJDAlhR5mhVRoRfRiPhQkVA89JAmFWEHZkz2FfxCMMIIowtl6KKPEKNTmmnO7m9v917mat2WTTD1wvst3vvP9OOc751xK0zRYS2H0Zd+5T6thsBgTwW/85c0cjVkNCUE2Qig3z0IQt490KLNymJZJE9JmMrFVO7dwTSZ23k5WCMvGyDo3Ztur9BKkcNQXi0BkA6j9H8yBsDsuh3W/K9MCDE0gEJbDUzOKZgBpQi33zXiENTvTzRXODDPIqgo8R2Dsu5z78WucNYBmfnmZq6paaTVzbodd0OHgn56FSFwFjqHyTBzFGG0jY7R6vIviTEGNJuw3cyzdbBV4u967vkAUwuGodGAH/2Z3rjDAMUQygGJMhYWs0TcL15OIj1EUXPtlYzHVRpvFlM9xNEwGZkGOx2O1JZYud2naLXR5p8dlAPGiHiHBpYphKDdLM2WapvokRR1QFHiNx4U8Sx/hOQb8wTgoSDtx0N5ZU2K7jtdH/pqUQEjhEXpWMNGXrRY2hedYkCTZKYmx42j3YtFqeY7ODkVlhElSfZn9YU2xrQWvjiYdvdbTLiLJmmXAI049exvZYLfgAUNh9UkxAfUqtkZ5TNYgFJmFU+X2x9VFqS344KPJCkf9+jnoL+ic+CEXPvWE6u72TxcFI2C1mIiiYu54zAbDMlQWWF9cqHY0CDzxLAY994pQuN1sABeERs0Z9Ip1N7qm6sd8UnqqQMO0qEDRNmHk0tHMRqeN6U8W2URAhnVpzFznJ1Pnq/di0+ErY5Nbj33QSi9+nhn0hhvQTi/27e7uho6ODmO/VEf7duUKbWcOZbS6HKxYsSf1yd484QHalUSnnp4eGB4ehvHxcWhvb/9dlCVkpiBfuH/v/PoIDr+Xpalg4mFvby94PB4sHjOnfr//n0B9xr9tymJv61OXaO/r64OhoaE5EEXNTwRN039Uec3kpwADAF/7QPnKdxP4AAAAAElFTkSuQmCC);
 }
 #awesome_screenshot_cancel span { 
