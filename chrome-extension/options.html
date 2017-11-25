@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html class="options_page">
+<head>
+  <title>Options</title>
+  <link href="stylesheets/options.css" type="text/css" rel="stylesheet">
+  <script type="text/javascript" src="javascripts/libs/jquery-2.1.3.min.js"></script>
+  <script type="text/javascript" src="javascripts/detect.js"></script>
+  <script type="text/javascript" src="javascripts/options.js"></script>
+</head>
+<body class="options_page">
+  <div id="wrapper">
+    <div id="header"><h1>Awesome Screenshot Options</h1></div>
+    <div id="options">
+      <fieldset id="format">
+        <legend>Image Format</legend>
+        <input type="radio" name="format" value="PNG" id="png" checked="checked"><label for="png">PNG</label>
+        <input type="radio" name="format" value="JPG" id="jpg"><label for="jpg">JPG</label>
+      </fieldset>
+      <fieldset>
+        <legend>Shortcuts Setting</legend>
+        <table id="shortcuts_table">
+          <tbody id="menu_shortcuts">
+            <tr>
+              <td><input type="checkbox" name="visible" id="visible"><label for="visible">Capture Visible</label></td>
+              <td class="select"></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" name="selected" id="selected"><label for="selected">Capture Selected Area</label></td>
+              <td class="select"></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" name="entire" id="entire"><label for="entire">Capture Entire</label></td>
+              <td class="select"></td>
+            </tr>
+          </tbody>
+        </table>
+      </fieldset>
+      <fieldset id="delay_sec">
+        <legend>Delay (for delayed capture)</legend>
+        <input type="radio" name="delay_sec" value="3" id="delay_sec_3" data-sec="3" checked="checked"><label for="delay_sec_3">3s</label>
+        <input type="radio" name="delay_sec" value="5" id="delay_sec_5" data-sec="5"><label for="delay_sec_5">5s</label>
+      </fieldset>
+      <div id="tip"><span></span></div>
+    </div>
+    <div id="action_panel">
+      <input type="button" id="reset" value="Reset">
+      <input type="button" id="save"  value="Save">
+      <input type="button" id="close" value="Close">
+    </div>
+  </div>
+</body>
+</html>

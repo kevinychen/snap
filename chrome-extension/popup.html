@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <link href="stylesheets/popup.css" type="text/css" rel="stylesheet">
+  </head>
+  <body class="popup_page">
+    <ul>
+      <li><a id="visible" class="i18n title"></a></li>
+      <li><a id="selected" class="i18n"><span></span>Capture selected area</a></li>
+      <li><a id="entire" class="i18n title"></a></li>
+      <li><a id="delayed" class="title"><span></span>Delayed capture</a></li>
+      <li><a id="desktop" class="i18n title">Capture desktop</a></li>
+      <li><a id="upload" class="i18n title"><span></span>Upload</a></li>
+      <li class="sep"></li>
+      <li><a id="help"><span></span>Help &amp; Feedback</a></li>
+      <li><a id="option"><span></span>Options<span class="shortcut" id="version"></span></a></li>
+    </ul>
+    <div id="capturing">
+      <div class="inner i18n" id="capture_hint"></div>
+    </div>
+    <div id="script_off" class="i18n"></div>
+    <script type="text/javascript" src="javascripts/libs/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="javascripts/detect.js"></script>
+    <script type="text/javascript" src="javascripts/popup.js"></script>
+  </body>
+</html>
