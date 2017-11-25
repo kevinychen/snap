@@ -68,7 +68,7 @@ div#awesome_screenshot_center {
 #awesome_screenshot_action {
 	display:none;
 	position:absolute; 
-	bottom:0; right:-140px;
+	top:0; right:-140px;
 	width:150px;
 }
 #awesome_screenshot_action a {
