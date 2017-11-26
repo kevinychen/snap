@@ -279,13 +279,16 @@ function handleRequest(ctx, req, sender) {
       newTab(ctx);
       break;
     }
-    case "image_search_done": {
+    case "image_search_done":
+    case "analyze_done": {
       ctx.centerH = req.data.h;
       ctx.centerW = req.data.w;
       ctx.centerOffX = req.data.x;
       ctx.centerOffY = req.data.y;
       captureVisible(ctx, function(){newTab(ctx)});
-      ctx.editAction = "image_search";
+      if (req.action == "image_search_done") {
+        ctx.editAction = "image_search";
+      }
       break;
     }
     case "edit_ready": {

@@ -153,13 +153,15 @@ function windowResize(){
 function bindCenter(){
   function onActionBarClick(a){
     switch (a.target.id) {
-      case "awesome_screenshot_image_search": imageSearch(); break;
-      case "awesome_screenshot_image_search_icon": imageSearch(); break;
+      case "awesome_screenshot_image_search": capture("image_search_done"); break;
+      case "awesome_screenshot_image_search_icon": capture("image_search_done"); break;
+      case "awesome_screenshot_analyze": capture("analyze_done"); break;
+      case "awesome_screenshot_analyze_icon": capture("analyze_done"); break;
       case "awesome_screenshot_cancel": removeSelection(); break;
       case "awesome_screenshot_cancel_icon": removeSelection(); break;
     }
   }
-  function imageSearch() {
+  function capture(action) {
     var a = document.getElementById("awesome_screenshot_size");
     setStyle(a, "display", "none");
     dragresize.deselect(c);
@@ -210,7 +212,7 @@ function bindCenter(){
       fixAndCapture();
     } else {
       removeSelection();
-      setTimeout(function(){sendRequest({action:"image_search_done",data:{x:offsetX,y:offsetY,w:selW,h:selH}})}, 100);
+      setTimeout(function(){sendRequest({action:action,data:{x:offsetX,y:offsetY,w:selW,h:selH}})}, 100);
     }
   }
   var c=document.getElementById("awesome_screenshot_center");
@@ -471,6 +473,7 @@ var wrapperHTML =
   '    <div id="awesome_screenshot_size" style="min-width:70px;"><span>0 X 0</span></div>' +
   '    <div id="awesome_screenshot_action">' +
   '      <a id="awesome_screenshot_image_search"><span id="awesome_screenshot_image_search_icon"></span>Image search</a>' +
+  '      <a id="awesome_screenshot_analyze"><span id="awesome_screenshot_analyze_icon"></span>Analyze</a>' +
   '      <a id="awesome_screenshot_cancel"><span id="awesome_screenshot_cancel_icon"></span>Cancel</a>' +
   '    </div>' +
   '  </div>' +
