@@ -26,4 +26,12 @@ class SnapResource implements SnapService {
             request.getHoughMinLineLength(),
             request.getMinDistBetweenGridLines());
     }
+
+    @Override
+    public ParsedGrid parseGrid(ParseGridRequest request) {
+        BufferedImage image = ImageUtils.from(request.getData());
+        return ImageUtils.parseGrid(
+            image,
+            request.getGrid());
+    }
 }

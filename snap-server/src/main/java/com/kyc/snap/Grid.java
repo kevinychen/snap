@@ -1,12 +1,12 @@
 package com.kyc.snap;
 
-import java.util.Set;
+import java.util.TreeSet;
 
 import lombok.Data;
 
 @Data
 public class Grid {
 
-    private final Set<Integer> rows;
-    private final Set<Integer> cols;
+    private final TreeSet<Integer> rows;
+    private final TreeSet<Integer> cols;
 }

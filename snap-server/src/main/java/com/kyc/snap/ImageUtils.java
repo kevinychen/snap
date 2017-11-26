@@ -1,12 +1,16 @@
 
 package com.kyc.snap;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -17,6 +21,8 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
+
+import com.kyc.snap.ParsedGrid.ParsedGridSquare;
 
 import jersey.repackaged.com.google.common.base.Preconditions;
 import nu.pattern.OpenCV;
@@ -42,11 +48,10 @@ class ImageUtils {
         Mat edges = canny(mat, cannyThreshold1, cannyThreshold2);
         Mat lines = hough(edges, houghThreshold, houghMinLineLength);
 
-        Set<Integer> rows = new TreeSet<>();
-        Set<Integer> cols = new TreeSet<>();
+        TreeSet<Integer> rows = new TreeSet<>();
+        TreeSet<Integer> cols = new TreeSet<>();
         for (int i = 0; i < lines.rows(); i++) {
             double[] data = lines.get(i, 0);
-            System.out.println(Arrays.toString(data));
             boolean vertical = data[0] == data[2];
             boolean horizontal = data[1] == data[3];
             Preconditions.checkArgument(horizontal != vertical,
@@ -62,6 +67,21 @@ class ImageUtils {
         removeCloseValues(cols, minDistBetweenGridLines);
 
         return new Grid(rows, cols);
+    }
+
+    static ParsedGrid parseGrid(BufferedImage image, Grid grid) {
+        List<Integer> rows = new ArrayList<>(grid.getRows());
+        List<Integer> cols = new ArrayList<>(grid.getCols());
+        Set<ParsedGridSquare> squares = new HashSet<>();
+        for (int i = 0; i + 1 < rows.size(); i++)
+            for (int j = 0; j + 1 < cols.size(); j++) {
+                List<Integer> rgbs = new ArrayList<>();
+                for (int x = cols.get(j); x < cols.get(j + 1); x++)
+                    for (int y = rows.get(i); y < rows.get(i + 1); y++)
+                        rgbs.add(image.getRGB(x, y));
+                squares.add(new ParsedGridSquare(i, j, averageRgbs(rgbs)));
+            }
+        return new ParsedGrid(squares);
     }
 
     private static Mat toMat(BufferedImage image) {
@@ -97,6 +117,20 @@ class ImageUtils {
             else
                 prevValue = value;
         }
+    }
+
+    private static int averageRgbs(Collection<Integer> rgbs) {
+        long sumRed = 0, sumGreen = 0, sumBlue = 0;
+        for (int rgb : rgbs) {
+            Color color = new Color(rgb);
+            sumRed += color.getRed() * color.getRed();
+            sumGreen += color.getGreen() * color.getGreen();
+            sumBlue += color.getBlue() * color.getBlue();
+        }
+        return new Color(
+            (int) Math.sqrt(sumRed / rgbs.size()),
+            (int) Math.sqrt(sumGreen / rgbs.size()),
+            (int) Math.sqrt(sumBlue / rgbs.size())).getRGB();
     }
 
     private ImageUtils() {

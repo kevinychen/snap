@@ -19,4 +19,8 @@ public interface SnapService {
     @POST
     @Path("gridify")
     Grid gridify(GridifyRequest request);
+
+    @POST
+    @Path("parseGrid")
+    ParsedGrid parseGrid(ParseGridRequest request);
 }
