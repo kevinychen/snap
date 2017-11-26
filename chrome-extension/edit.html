@@ -28,8 +28,8 @@
       <div id="annotation_bar">
         <a id="gridify" class="title enabled"><b></b>Overlay grid</a>
         <div id="gridify-config">
-          <div>Threshold:<input id="gridify-threshold" type="text" class="cd-input"></div>
-          <div>Resolution:<input id="gridify-resolution" type="text" class="cd-input"></div>
+          <div>Threshold:<input id="gridify-threshold" type="text" class="cd-input" value=50></div>
+          <div>Resolution:<input id="gridify-resolution" type="text" class="cd-input" value=16></div>
         </div>
         <a id="save" class="title enabled"><b></b>Done</a>
         <a id="done" class="title enabled"><b></b>Crop</a>
@@ -200,6 +200,7 @@
         </div>
       </div>
       <canvas id="show-canvas" width="0" height="0"></canvas>
+      <canvas id="overlay-canvas" width="0" height="0"></canvas>
       <div id="cropdiv" class="drsElement drsMoveHandle" style="z-index:900;left: 0px; top: 0px; width: 0px; height: 0px; background: rgba(0,0,0,0);display:none; text-align: center;position:absolute;outline:1px dashed #777;cursor:move">
         <span id="crop-size"></span>
       </div>

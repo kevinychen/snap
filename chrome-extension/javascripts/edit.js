@@ -632,54 +632,58 @@ function save() {
   }
 }
 
+function paintGrid(rows, cols) {
+  if ($('#draw-canvas').length) {
+    $('#draw-canvas').remove();
+  }
+  var drawCanvas = $('<canvas id="draw-canvas">').insertAfter(showCanvas)[0];
+  $(drawCanvas)
+    .css({left: "0px", top: "0px", cursor: "crosshair"})
+    .attr({width: showCanvas.width, height: showCanvas.height});
+  var ctx = drawCanvas.getContext('2d');
+  ctx.strokeStyle = 'red';
+  rows.forEach(function(row) {
+    ctx.beginPath();
+    ctx.moveTo(0, row);
+    ctx.lineTo(drawCanvas.width, row);
+    ctx.stroke();
+  });
+  cols.forEach(function(col) {
+    ctx.beginPath();
+    ctx.moveTo(col, 0);
+    ctx.lineTo(col, drawCanvas.height);
+    ctx.stroke();
+  });
+}
+
+function fetchGrid() {
+  $.ajax({
+    url: "http://localhost:7627/gridify",
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      data: showCanvas.toDataURL().split(',')[1],
+      houghThreshold: $('#gridify-threshold').val(),
+      minDistBetweenGridLines: $('#gridify-resolution').val(),
+    }),
+    processData: false,
+    success: function(result) {
+      paintGrid(result.rows, result.cols);
+    },
+    error: function() {
+      console.log("Error fetching grid");
+    },
+  });
+}
+
 var GridifyAction = function(resultCb) {
-  $('#gridify-config').show();
-  $('#gridify-threshold').val(50);
-  $('#gridify-resolution').val(16);
-
-  function paintGrid(rows, cols) {
-    var canvas = document.getElementById('show-canvas');
-    var ctx = canvas.getContext('2d');
-    ctx.strokeStyle = 'red';
-    rows.forEach(function(row) {
-      ctx.beginPath();
-      ctx.moveTo(0, row);
-      ctx.lineTo(canvas.width, row);
-      ctx.stroke();
-    });
-    cols.forEach(function(col) {
-      ctx.beginPath();
-      ctx.moveTo(col, 0);
-      ctx.lineTo(col, canvas.height);
-      ctx.stroke();
-    });
-  }
-
-  function fetchGrid() {
-    var dataURL = document.getElementById('show-canvas').toDataURL();
-    $.ajax({
-      url: "http://localhost:7627/gridify",
-      type: "POST",
-      contentType: "application/json",
-      data: JSON.stringify({
-        data: dataURL.split(',')[1],
-        houghThreshold: $('#gridify-threshold').val(),
-        minDistBetweenGridLines: $('#gridify-resolution').val(),
-      }),
-      processData: false,
-      success: function(result) {
-        paintGrid(result.rows, result.cols);
-      },
-      error: function() {
-        console.log("Error fetching grid");
-      },
-    });
-  }
-
   this.done = function() {
-    var canvas = document.getElementById('show-canvas');
-    resultCb({data: canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height)});
+    $('#draw-canvas').remove();
+    $('#gridify-config').hide();
+    resultCb({data: showCanvas.getContext('2d').getImageData(0, 0, showCanvas.width, showCanvas.height)});
   }
+
+  $('#gridify-config').show();
 
   fetchGrid();
 }
@@ -1462,6 +1466,9 @@ function handleReq(req) {
 }
 
 $(document).ready(function(){
+  $('#gridify-threshold').on('change', fetchGrid);
+  $('#gridify-resolution').on('change', fetchGrid);
+
   $editArea=$("#edit-area").disableSelection();
   showCanvas = document.getElementById("show-canvas");
   showCtx = showCanvas.getContext("2d");
