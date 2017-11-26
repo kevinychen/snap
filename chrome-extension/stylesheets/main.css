@@ -79,10 +79,13 @@ input[type=password] {
     padding:2px 7px;
     -webkit-border-radius:6px;
 }
-#tool-panel #crop {
-    padding-left:6px;
-    border-right:1px solid #c1c1c1;
-    -webkit-border-top-left-radius:6px; -webkit-border-bottom-left-radius:6px;
+#tool-panel #gridify {
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 20px;
+    padding:2px 7px;
+    width: 100px;
+    -webkit-border-radius:6px;
 }
 #tool-panel #rectangle { border-left:1px solid #efefef; }
 #tool-panel #text { border-right:1px solid #c1c1c1; }
@@ -98,7 +101,7 @@ input[type=password] {
     font-size:14px;
     line-height:20px;
 }
-#tool-panel #done, #tool-panel #cancel, #tool-panel #crop-dimension{ display:none; }
+#tool-panel #done, #tool-panel #cancel, #tool-panel #gridify-config{ display:none; }
 #tool-panel #done { margin-right:20px; font-size:13px !important; font-weight:bold; }
 #tool-panel>div>a#save {
     margin-left:40px;
@@ -283,7 +286,7 @@ li#diigo_web_highlighter:hover a {
 #exit span { background-position:-320px -20px;}
 #exit:hover span { background-position:-320px 0; }
 
-#crop span { background-position:0 0; }
+#gridify b { background-position:-20px 0; }
 #rectangle span { background-position:-20px 0; }
 #ro-rectangle span {background-position:-20px 0; }
 #ellipse span { background-position:-40px 0; }
@@ -380,16 +383,17 @@ body.crop #edit-area div[contenteditable] { display:none; } /* add 'body' to ove
 .crop #helper { display:block; cursor:crosshair; }
 .crop #center div { display:none !important; }
 
-#crop-dimension{
+#gridify-config{
     position: absolute;
     border-radius: 3px;
     margin-left: 10px;
     color: #ffffff;
     font: normal 14px/16px arial, Helvetica;
     right: 10px;
+    bottom: 10px;
 }
 
-#crop-dimension div{
+#gridify-config div{
     margin-right: 10px;
     display: inline;
 }
@@ -417,7 +421,7 @@ input.cd-input{
 { display:none; }
 .selected #tool-panel>div a#done,
 .selected #tool-panel>div a#cancel,
-.selected #tool-panel>div #crop-dimension
+.selected #tool-panel>div #gridify-config
 { display:inline-block; }
 
 .changed #top,

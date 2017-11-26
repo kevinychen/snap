@@ -332,6 +332,10 @@ function updateSelectedToolButton() {
 function newAction(tool) {
   var a = null;
   switch (tool) {
+    case "gridify": {
+      a = new GridifyAction(commit);
+      break;
+    }
     case "crop": {
       a = new CropAction(commit);
       break;
@@ -429,7 +433,6 @@ function selectTool(tool) {
       if (currentAction != null) currentAction.done();
       $(showCanvas).unbind();
       currentAction = newAction(tool);
-      updateUndoButton();
     }
   }
 }
@@ -628,6 +631,11 @@ function save() {
     SavePage.init();
     isSavePageInit = !0;
   }
+}
+
+var GridifyAction = function(resultCb) {
+  $('#gridify-config').show();
+  console.log("gridify action");
 }
 
 var CropAction = function(resultCb) {
