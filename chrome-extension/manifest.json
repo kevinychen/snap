@@ -20,6 +20,7 @@
       "32": "images/icon32.png",
       "48": "images/icon48.png"
    },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjEWSb8wg8/Vnb0izCNjarloprZTfDiIEX8hSFV3nwg/e/Or8gGn/YIBJWVXZ5OWurCsb4eSDPdvi2XoH93ChMBfx8s19Euw7ZQgcI5olhZIgxqK+/s8sZ7v9ukI10DqDJlX7BzUA2bCo40Jjq1eNh7/DCf20u4Ovh5eutsXObZKYGqqZEg1ChDzmNLJcqpfjZcVtYGySdsvTOsj2Z9xNkAAehsm72EzdEfJ5IJmlHVlRYItKcS0TlHxf25qnQEUzBBVqKlKhxNxMn9w6jZP+9xSlp+2LUUYwJ7sNhR0649VSjtlVZ+wRPPlTX5KmhYeT/q+CNMnfOZ0kFah+FsM1KwIDAQAB",
    "manifest_version": 2,
    "minimum_chrome_version": "37.0",
    "name": "Snap toolbox",
