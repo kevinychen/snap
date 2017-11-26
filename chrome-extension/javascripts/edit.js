@@ -388,6 +388,7 @@ function selectTool(tool) {
   console.log("selectTool", tool);
 
   switch (tool) {
+    case "parse-grid": break;
     case "color": color(); break;
     case "done": {
       if (currentAction != null) currentAction.done();
@@ -668,6 +669,7 @@ function fetchGrid() {
     }),
     processData: false,
     success: function(result) {
+      grid = result;
       paintGrid(result.rows, result.cols);
     },
     error: function() {
@@ -676,14 +678,64 @@ function fetchGrid() {
   });
 }
 
+// https://stackoverflow.com/questions/37795241/java-color-integer-to-rgb-string-in-javascript
+function getHexColor(number){
+  return "#"+((number)>>>0).toString(16).slice(-6);
+}
+
+function paintParsedGrid(squares) {
+  if ($('#parsed-grid-canvas').length) {
+    $('#parsed-grid-canvas').remove();
+  }
+  var drawCanvas = $('<canvas id="parsed-grid-canvas">').insertAfter(showCanvas)[0];
+  $(drawCanvas)
+    .css({left: "0px", top: "0px", cursor: "crosshair"})
+    .attr({width: showCanvas.width, height: showCanvas.height});
+  var ctx = drawCanvas.getContext('2d');
+  squares.forEach(function(square) {
+    var startX = grid.cols[square.col];
+    var endX = grid.cols[square.col + 1];
+    var startY = grid.rows[square.row];
+    var endY = grid.rows[square.row + 1];
+    ctx.fillStyle = getHexColor(square.rgb);
+    ctx.fillRect((2 * startX + endX) / 3, (2 * startY + endY) / 3, (endX - startX) / 3, (endY - startY) / 3);
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect((2 * startX + endX) / 3, (2 * startY + endY) / 3, (endX - startX) / 3, (endY - startY) / 3);
+  });
+}
+
+function parseGrid() {
+  $.ajax({
+    url: "http://localhost:7627/parseGrid",
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      data: showCanvas.toDataURL().split(',')[1],
+      grid: grid,
+    }),
+    processData: false,
+    success: function(result) {
+      paintParsedGrid(result.squares);
+    },
+    error: function() {
+      console.log("Error parsing grid");
+    },
+  });
+}
+
 var GridifyAction = function(resultCb) {
   this.done = function() {
     $('#draw-canvas').remove();
+    $('#parsed-grid-canvas').remove();
+    $('#gridify').show();
     $('#gridify-config').hide();
+    $('#parse-grid').hide();
     resultCb({data: showCanvas.getContext('2d').getImageData(0, 0, showCanvas.width, showCanvas.height)});
   }
 
+  $('#gridify').hide();
   $('#gridify-config').show();
+  $('#parse-grid').show().css('display', 'inline-block');
 
   fetchGrid();
 }
@@ -1468,6 +1520,10 @@ function handleReq(req) {
 $(document).ready(function(){
   $('#gridify-threshold').on('change', fetchGrid);
   $('#gridify-resolution').on('change', fetchGrid);
+  $('#parse-grid').on('click', function() {
+    $('#gridify-config').hide();
+    parseGrid();
+  });
 
   $editArea=$("#edit-area").disableSelection();
   showCanvas = document.getElementById("show-canvas");
