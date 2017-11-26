@@ -1,18 +1,20 @@
 
 package com.kyc.snap;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.BadRequestException;
@@ -20,6 +22,7 @@ import javax.ws.rs.BadRequestException;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.TermCriteria;
 import org.opencv.imgproc.Imgproc;
 
 import com.kyc.snap.ParsedGrid.ParsedGridSquare;
@@ -69,7 +72,7 @@ class ImageUtils {
         return new Grid(rows, cols);
     }
 
-    static ParsedGrid parseGrid(BufferedImage image, Grid grid) {
+    static ParsedGrid parseGrid(BufferedImage image, Grid grid, int numClusters) {
         List<Integer> rows = new ArrayList<>(grid.getRows());
         List<Integer> cols = new ArrayList<>(grid.getCols());
         Set<ParsedGridSquare> squares = new HashSet<>();
@@ -81,7 +84,16 @@ class ImageUtils {
                         rgbs.add(image.getRGB(x, y));
                 squares.add(new ParsedGridSquare(i, j, averageRgbs(rgbs)));
             }
-        return new ParsedGrid(squares);
+
+        List<Integer> rgbs = squares.stream()
+                .map(ParsedGridSquare::getRgb)
+                .collect(Collectors.toList());
+        Map<Integer, Integer> clusters = cluster(rgbs, numClusters);
+        Set<ParsedGridSquare> clusteredSquares = squares.stream()
+                .map(square -> new ParsedGridSquare(square.getRow(), square.getCol(), clusters.get(square.getRgb())))
+                .collect(Collectors.toSet());
+
+        return new ParsedGrid(clusteredSquares);
     }
 
     private static Mat toMat(BufferedImage image) {
@@ -122,15 +134,42 @@ class ImageUtils {
     private static int averageRgbs(Collection<Integer> rgbs) {
         long sumRed = 0, sumGreen = 0, sumBlue = 0;
         for (int rgb : rgbs) {
-            Color color = new Color(rgb);
-            sumRed += color.getRed() * color.getRed();
-            sumGreen += color.getGreen() * color.getGreen();
-            sumBlue += color.getBlue() * color.getBlue();
+            AdjustedRGB adjusted = AdjustedRGB.from(rgb);
+            sumRed += adjusted.getRedSquared();
+            sumGreen += adjusted.getGreenSquared();
+            sumBlue += adjusted.getBlueSquared();
         }
-        return new Color(
-            (int) Math.sqrt(sumRed / rgbs.size()),
-            (int) Math.sqrt(sumGreen / rgbs.size()),
-            (int) Math.sqrt(sumBlue / rgbs.size())).getRGB();
+        return new AdjustedRGB(sumRed / rgbs.size(), sumGreen / rgbs.size(), sumBlue / rgbs.size()).toRGB();
+    }
+
+    private static Map<Integer, Integer> cluster(List<Integer> rgbs, int numClusters) {
+        Mat data = new Mat(rgbs.size(), 3, CvType.CV_32F);
+        for (int i = 0; i < rgbs.size(); i++) {
+            AdjustedRGB adjusted = AdjustedRGB.from(rgbs.get(i));
+            data.put(i, 0, adjusted.getRedSquared());
+            data.put(i, 1, adjusted.getGreenSquared());
+            data.put(i, 2, adjusted.getBlueSquared());
+        }
+
+        Mat labels = new Mat();
+        Mat centers = new Mat();
+        Core.kmeans(data, numClusters, labels, new TermCriteria(TermCriteria.COUNT, 100, 0), 1, Core.KMEANS_PP_CENTERS, centers);
+
+        List<Integer> centerRGBs = new ArrayList<>();
+        for (int i = 0; i < numClusters; i++) {
+            AdjustedRGB adjusted = new AdjustedRGB(
+                (int) centers.get(i, 0)[0],
+                (int) centers.get(i, 1)[0],
+                (int) centers.get(i, 2)[0]);
+            centerRGBs.add(adjusted.toRGB());
+        }
+
+        Map<Integer, Integer> clusters = new HashMap<>();
+        for (int i = 0; i < rgbs.size(); i++) {
+            int label = (int) labels.get(i, 0)[0];
+            clusters.put(rgbs.get(i), centerRGBs.get(label));
+        }
+        return clusters;
     }
 
     private ImageUtils() {

@@ -32,6 +32,7 @@ class SnapResource implements SnapService {
         BufferedImage image = ImageUtils.from(request.getData());
         return ImageUtils.parseGrid(
             image,
-            request.getGrid());
+            request.getGrid(),
+            request.getNumClusters());
     }
 }

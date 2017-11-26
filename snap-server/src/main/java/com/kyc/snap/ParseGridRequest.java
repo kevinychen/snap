@@ -7,4 +7,6 @@ public class ParseGridRequest {
 
     private final byte[] data;
     private final Grid grid;
+
+    private int numClusters = 2;
 }
