@@ -15,6 +15,7 @@ repositories {
 
 dependencies {
     compile "io.dropwizard:dropwizard-core:1.2.1"
+    compile "org.openpnp:opencv:3.2.0-1"
     compile "org.projectlombok:lombok:1.16.12"
 
     testCompile "junit:junit:4.12"
