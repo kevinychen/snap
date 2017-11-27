@@ -9,4 +9,6 @@ import lombok.EqualsAndHashCode;
 class SnapConfiguration extends Configuration {
 
     private final String productName;
+
+    private final String googleAPICredentialsFile;
 }

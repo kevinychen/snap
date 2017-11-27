@@ -1,4 +1,5 @@
 productName: snap
+googleAPICredentialsFile: google-api-credentials.json
 server:
     applicationConnectors:
         - port: 7627

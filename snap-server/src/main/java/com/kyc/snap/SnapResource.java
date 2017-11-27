@@ -5,9 +5,11 @@ import java.awt.image.BufferedImage;
 class SnapResource implements SnapService {
 
     private final String productName;
+    private final GoogleAPIManager googleAPIManager;
 
-    public SnapResource(String productName) {
+    public SnapResource(String productName, GoogleAPIManager googleAPIManager) {
         this.productName = productName;
+        this.googleAPIManager = googleAPIManager;
     }
 
     @Override
@@ -34,5 +36,10 @@ class SnapResource implements SnapService {
             image,
             request.getGrid(),
             request.getNumClusters());
+    }
+
+    @Override
+    public String exportToGoogleSheets(ExportToGoogleSheetsRequest request) {
+        return googleAPIManager.exportToGoogleSheets(request.getParsedGrid());
     }
 }

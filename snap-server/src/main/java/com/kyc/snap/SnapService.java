@@ -23,4 +23,8 @@ public interface SnapService {
     @POST
     @Path("parseGrid")
     ParsedGrid parseGrid(ParseGridRequest request);
+
+    @POST
+    @Path("export/googleSheets")
+    String exportToGoogleSheets(ExportToGoogleSheetsRequest request);
 }

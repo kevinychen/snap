@@ -12,6 +12,7 @@ public class SnapServer extends Application<SnapConfiguration> {
     @Override
     public void run(SnapConfiguration configuration, Environment environment) throws Exception {
         ImageUtils.load();
-        environment.jersey().register(new SnapResource(configuration.getProductName()));
+        GoogleAPIManager googleAPIManager = new GoogleAPIManager(configuration.getGoogleAPICredentialsFile());
+        environment.jersey().register(new SnapResource(configuration.getProductName(), googleAPIManager));
     }
 }
