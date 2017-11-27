@@ -488,6 +488,17 @@ function undo() {
 
 function i18n(){$("title").text(chrome.i18n.getMessage("editTitle")),document.getElementById("save").lastChild.data=chrome.i18n.getMessage("saveBtn"),document.getElementById("done").lastChild.data=chrome.i18n.getMessage("doneBtn"),document.getElementById("cancel").lastChild.data=chrome.i18n.getMessage("cancelBtn"),document.getElementById("save_button").lastChild.data=chrome.i18n.getMessage("save_button"),$(".title").each(function(){$(this).attr({title:chrome.i18n.getMessage(this.id.replace(/-/,""))})}),$(".i18n").each(function(){$(this).html(chrome.i18n.getMessage(this.id.replace(/-/,"")))}),$("#share")[0].innerHTML+='<div class="tip">[?]<div>Images hosted on <a href="http://awesomescreenshot.com" target="_blank">awesomescreenshot.com</a></div></div>'}
 
+function combineCanvases(canvases) {
+  var combined = document.createElement("canvas");
+  combined.width = showCanvas.width;
+  combined.height = showCanvas.height;
+  var ctx = combined.getContext("2d");
+  for (var i = 0; i < canvases.length; i++) {
+    ctx.drawImage(canvases[i], 0, 0);
+  }
+  return combined;
+}
+
 function save() {
   function embedLocalSave() {
     function a() {
@@ -500,7 +511,7 @@ function save() {
     function b(b) {
       $("#save-image")[0].src!=b?$("#save-image").attr({src:b}).load(function(){$(this).css({width:"auto"}),this.width>=parseInt($("#save_image_wrapper").css("width"))&&$(this).css({width:"100%"}),a(),$(this).unbind()}):a();
     }
-    c = ("jpg" == localStorage.format) ? showCanvas.toDataURL("image/jpeg") : showCanvas.toDataURL();
+    c = ("jpg" == localStorage.format) ? combineCanvases($('.save-canvas')).toDataURL("image/jpeg") : combineCanvases($('.save-canvas')).toDataURL();
     b(c);
     var d = $("#save-image").attr("src").split(",")[1].replace(/\+/g,"%2b");
     e = tabtitle.replace(/[#$~!@%^&*();'"?><\[\]{}\|,:\/=+-]/g, " ");
@@ -599,7 +610,7 @@ function save() {
   $("#save-image, #re-edit").css({visibility:"hidden"});
   $("body").removeClass("crop draw-text").addClass("save");
   $("#save").removeClass("active");
-  $("#show-canvas").toggle();
+  $(".save-canvas").toggle();
   $("#share+dd").html(chrome.i18n.getMessage("savedShareDesc"));
   $("#upload").parent().html($("#upload")[0].outerHTML);
   $($editArea).enableSelection();
@@ -610,7 +621,7 @@ function save() {
     } else {
       $("#saveOnline .content .diigo input[name=title]").val("");
       $("body").removeClass("save");
-      $("#show-canvas").toggle();
+      $(".save-canvas").toggle();
       $($editArea).disableSelection();
       $("#share+dd div").hide();
       $("#save_local+dd>p").hide();
@@ -637,7 +648,7 @@ function paintGrid(rows, cols) {
   if ($('#draw-canvas').length) {
     $('#draw-canvas').remove();
   }
-  var drawCanvas = $('<canvas id="draw-canvas">').insertAfter(showCanvas)[0];
+  var drawCanvas = $('<canvas id="draw-canvas" class="save-canvas">').insertAfter(showCanvas)[0];
   $(drawCanvas)
     .css({left: "0px", top: "0px", cursor: "crosshair"})
     .attr({width: showCanvas.width, height: showCanvas.height});
@@ -687,7 +698,7 @@ function paintParsedGrid(squares) {
   if ($('#parsed-grid-canvas').length) {
     $('#parsed-grid-canvas').remove();
   }
-  var drawCanvas = $('<canvas id="parsed-grid-canvas">').insertAfter(showCanvas)[0];
+  var drawCanvas = $('<canvas id="parsed-grid-canvas" class="save-canvas">').insertAfter(showCanvas)[0];
   $(drawCanvas)
     .css({left: "0px", top: "0px", cursor: "crosshair"})
     .attr({width: showCanvas.width, height: showCanvas.height});
@@ -725,8 +736,6 @@ function parseGrid() {
 
 var GridifyAction = function(resultCb) {
   this.done = function() {
-    $('#draw-canvas').remove();
-    $('#parsed-grid-canvas').remove();
     $('#gridify').show();
     $('#gridify-config').hide();
     $('#parse-grid').hide();
