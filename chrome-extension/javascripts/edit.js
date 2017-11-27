@@ -676,6 +676,7 @@ function fetchGrid() {
     data: JSON.stringify({
       data: showCanvas.toDataURL().split(',')[1],
       houghThreshold: $('#gridify-threshold').val(),
+      houghMinLineLength: $('#gridify-resolution').val(),
       minDistBetweenGridLines: $('#gridify-resolution').val(),
     }),
     processData: false,
