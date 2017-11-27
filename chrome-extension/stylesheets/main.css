@@ -1032,8 +1032,8 @@ a.visited { color:#bbb !important; }
 	background:url(../images/diigo.png) no-repeat 1px 1px;
 	background-size:17px;
 }
-#saveOnline .as .button.save::before {
-	background:url(../images/icon19.png) no-repeat 1px 1px;
+#saveOnline #google-sheets .button.save::before {
+	background:url(../images/google-sheets.png) no-repeat 1px 1px;
 	background-size:17px;
 }
 #saveLocal .button.save::before {
@@ -1297,8 +1297,8 @@ label[for=privacy] {
 	background: url(../images/diigo.png) no-repeat 1px 1px;
 	background-size: 17px;
 }
-.as::before {
-	background: url(../images/icon19.png) no-repeat 1px 1px;
+#google-sheets::before {
+	background: url(../images/google-sheets.png) no-repeat 1px 1px;
 	background-size: 17px;
 }
 .local::before {
@@ -1306,11 +1306,7 @@ label[for=privacy] {
 }
 #saveOptionList>li:hover {
 	cursor:pointer;
-}
-#saveOptionList>li:hover::after {
-	content:url(../images/arrow-option.png);
-	float:right;
-	margin-top:2px;
+	background-color: #5e5c62;
 }
 /* save option content */
 #saveOptionContent {

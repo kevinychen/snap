@@ -2099,13 +2099,9 @@ SavePage.initSaveOption = function(){
     }
   });
 
-  $("#saveOptionList").click(function(a){
-    var b = a.target;
-    if ($(b).hasParent("#saveOptionList")) {
-      $("#saveOptionContent").find("." + b.className).addClass("selected");
-      $("#saveOptionHead, #saveOptionBody").addClass("showContent");
-      $("#saveLocal").hide();
-    }
+  $("#google-sheets").click(function(a){
+    // TODO
+    console.log("upload to Google sheet");
   });
 
   $("#sgdriveOption").click(function(){

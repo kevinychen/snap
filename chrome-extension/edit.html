@@ -52,14 +52,10 @@
         <div id="saveTipOuter">
           <div id="save-tip">
             <img id="re-edit-icon" src="images/redo.png"> <a id="re-edit"></a>
-            <div id="saveOptionHead"><span class="title">Save Online</span> <span class="back">&laquo; Back</span></div>
+            <div id="saveOptionHead"><span class="title">Export</span> <span class="back">&laquo; Back</span></div>
             <div id="saveOptionBody" class="clear">
               <ul id="saveOptionList">
-                <li class="as">Temporarily</li>
-                <li class="diigo">Permanently, on Diigo.com</li>
-                <li class="sgdrive" id="sgdriveOption">On Google Drive <span id="gdrive-username"></span></li>
-                <li class="imgur" id="imgurOption">Upload to Imgur</li>
-                <li class="local">Local</li>
+                <li id="google-sheets">To Google Sheet</li>
               </ul>
               <ul id="saveOptionContent">
                 <li class="diigo clear">
@@ -186,7 +182,7 @@
                 <dd></dd>
               </dl>
             </div>
-            <div id="saveLocal" class="section">
+            <div id="saveLocal" class="section" style="display:none;">
               <h3><span class="title">Save Local</span></h3>
               <div class="content clear save_button"><span>Save image as a file</span> <span class="button save">Save</span></div>
               <!-- TODO: restore copy functionality <div class="content clear copy_button"><span>Copy to clipboard</span> <span class="button save">Copy</span></div> -->
