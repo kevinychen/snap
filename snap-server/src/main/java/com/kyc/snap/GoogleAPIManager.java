@@ -17,11 +17,14 @@ import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.CellData;
 import com.google.api.services.sheets.v4.model.CellFormat;
 import com.google.api.services.sheets.v4.model.Color;
+import com.google.api.services.sheets.v4.model.DimensionProperties;
+import com.google.api.services.sheets.v4.model.DimensionRange;
 import com.google.api.services.sheets.v4.model.GridRange;
 import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.RowData;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.UpdateCellsRequest;
+import com.google.api.services.sheets.v4.model.UpdateDimensionPropertiesRequest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -49,13 +52,22 @@ class GoogleAPIManager {
         try {
             // TODO create new sheet
             Spreadsheet spreadsheet = sheets.spreadsheets().get("1n2XG8kgi-XZoD1n5jZoW4UbIFI99U2l0Uc_9SQPb8TA").execute();
+            int sheetId = 0;
+
             sheets.spreadsheets()
                 .batchUpdate(spreadsheet.getSpreadsheetId(), new BatchUpdateSpreadsheetRequest()
                     .setRequests(ImmutableList.of(new Request()
                         .setUpdateCells(new UpdateCellsRequest()
                             .setFields("userEnteredFormat")
                             .setRange(new GridRange()
-                                .setSheetId(0))))))
+                                .setSheetId(sheetId))), new Request()
+                        .setUpdateDimensionProperties(new UpdateDimensionPropertiesRequest()
+                            .setProperties(new DimensionProperties()
+                                .setPixelSize(20))
+                            .setFields("pixelSize")
+                            .setRange(new DimensionRange()
+                                .setSheetId(sheetId)
+                                .setDimension("COLUMNS"))))))
                 .execute();
 
             sheets.spreadsheets()
@@ -74,7 +86,7 @@ class GoogleAPIManager {
                                                     .setBlue(color.getBlue() / 255f)))))))
                                     .setFields("userEnteredFormat.backgroundColor")
                                     .setRange(new GridRange()
-                                        .setSheetId(0)
+                                        .setSheetId(sheetId)
                                         .setStartRowIndex(square.getRow())
                                         .setEndRowIndex(square.getRow() + 1)
                                         .setStartColumnIndex(square.getCol())
