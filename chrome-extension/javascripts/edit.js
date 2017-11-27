@@ -726,10 +726,30 @@ function parseGrid() {
     }),
     processData: false,
     success: function(result) {
+      parsedGrid = result;
       paintParsedGrid(result.squares);
     },
     error: function() {
       console.log("Error parsing grid");
+    },
+  });
+}
+
+function uploadToGoogleSheets() {
+  $.ajax({
+    url: "http://localhost:7627/export/googleSheets",
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      parsedGrid: parsedGrid,
+    }),
+    dataType: "text",
+    processData: false,
+    success: function(result) {
+      window.location = result;
+    },
+    error: function() {
+      console.log("Error uploading to Google Sheets");
     },
   });
 }
@@ -2100,8 +2120,7 @@ SavePage.initSaveOption = function(){
   });
 
   $("#google-sheets").click(function(a){
-    // TODO
-    console.log("upload to Google sheet");
+    uploadToGoogleSheets();
   });
 
   $("#sgdriveOption").click(function(){

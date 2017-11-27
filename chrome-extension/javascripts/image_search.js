@@ -34,7 +34,6 @@ function redirectToImageSearch() {
   xhr.open("POST", "https://images.google.com/searchbyimage/upload");
   xhr.onreadystatechange = function() {
       if (xhr.readyState == XMLHttpRequest.DONE) {
-          console.log(xhr);
           window.location = xhr.responseURL;
       }
   }
