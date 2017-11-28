@@ -67,8 +67,9 @@ function prepareEditArea(req) {
   var n = 0;
   switch (req.type){
     case "visible":
-    case "image_search": {
-      if (req.type == "image_search") {
+    case "image_search":
+    case "parse_grid": {
+      if (req.type == "image_search" || req.type == "parse_grid") {
         document.getElementById("overlay").style.display = "block";
       }
       $("#save-image").attr({src:images[0]}).load(function(){
@@ -111,6 +112,12 @@ function prepareEditArea(req) {
         $(this).unbind("load");
         if (req.type == "image_search") {
           redirectToImageSearch();
+        } else if (req.type == "parse_grid") {
+          fetchGrid(function() {
+            parseGrid(function() {
+              uploadToGoogleSheets();
+            });
+          });
         }
       });
       break;
@@ -668,7 +675,7 @@ function paintGrid(rows, cols) {
   });
 }
 
-function fetchGrid() {
+function fetchGrid(cb) {
   $.ajax({
     url: "http://localhost:7627/gridify",
     type: "POST",
@@ -683,6 +690,7 @@ function fetchGrid() {
     success: function(result) {
       grid = result;
       paintGrid(result.rows, result.cols);
+      cb();
     },
     error: function() {
       console.log("Error fetching grid");
@@ -716,7 +724,7 @@ function paintParsedGrid(squares) {
   });
 }
 
-function parseGrid() {
+function parseGrid(cb) {
   $.ajax({
     url: "http://localhost:7627/parseGrid",
     type: "POST",
@@ -729,6 +737,7 @@ function parseGrid() {
     success: function(result) {
       parsedGrid = result;
       paintParsedGrid(result.squares);
+      cb();
     },
     error: function() {
       console.log("Error parsing grid");

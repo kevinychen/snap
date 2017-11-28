@@ -280,6 +280,7 @@ function handleRequest(ctx, req, sender) {
       break;
     }
     case "image_search_done":
+    case "parse_grid_done":
     case "analyze_done": {
       ctx.centerH = req.data.h;
       ctx.centerW = req.data.w;
@@ -288,6 +289,8 @@ function handleRequest(ctx, req, sender) {
       captureVisible(ctx, function(){newTab(ctx)});
       if (req.action == "image_search_done") {
         ctx.editAction = "image_search";
+      } else if (req.action == "parse_grid_done") {
+        ctx.editAction = "parse_grid";
       }
       break;
     }

@@ -155,6 +155,8 @@ function bindCenter(){
     switch (a.target.id) {
       case "awesome_screenshot_image_search": capture("image_search_done"); break;
       case "awesome_screenshot_image_search_icon": capture("image_search_done"); break;
+      case "awesome_screenshot_parse_grid": capture("parse_grid_done"); break;
+      case "awesome_screenshot_parse_grid_icon": capture("parse_grid_done"); break;
       case "awesome_screenshot_analyze": capture("analyze_done"); break;
       case "awesome_screenshot_analyze_icon": capture("analyze_done"); break;
       case "awesome_screenshot_cancel": removeSelection(); break;
@@ -473,6 +475,7 @@ var wrapperHTML =
   '    <div id="awesome_screenshot_size" style="min-width:70px;"><span>0 X 0</span></div>' +
   '    <div id="awesome_screenshot_action">' +
   '      <a id="awesome_screenshot_image_search"><span id="awesome_screenshot_image_search_icon"></span>Image search</a>' +
+  '      <a id="awesome_screenshot_parse_grid"><span id="awesome_screenshot_parse_grid_icon"></span>Parse grid</a>' +
   '      <a id="awesome_screenshot_analyze"><span id="awesome_screenshot_analyze_icon"></span>Analyze</a>' +
   '      <a id="awesome_screenshot_cancel"><span id="awesome_screenshot_cancel_icon"></span>Cancel</a>' +
   '    </div>' +
