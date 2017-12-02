@@ -4,17 +4,16 @@ package com.kyc.snap;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.BadRequestException;
@@ -45,6 +44,16 @@ class ImageUtils {
         }
     }
 
+    static byte[] toBytes(BufferedImage image) {
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new BadRequestException("Failed to convert image");
+        }
+    }
+
     static Grid findGrid(BufferedImage image, int cannyThreshold1, int cannyThreshold2, int houghThreshold, double houghMinLineLength,
             int minDistBetweenGridLines) {
         Mat mat = toMat(image);
@@ -72,28 +81,33 @@ class ImageUtils {
         return new Grid(rows, cols);
     }
 
-    static ParsedGrid parseGrid(BufferedImage image, Grid grid, int numClusters) {
+    static ParsedGrid parseGrid(BufferedImage image, Grid grid, int numClusters, GoogleAPIManager googleAPIManager) {
         List<Integer> rows = new ArrayList<>(grid.getRows());
         List<Integer> cols = new ArrayList<>(grid.getCols());
-        Set<ParsedGridSquare> squares = new HashSet<>();
+
+        List<Integer> averageRgbs = new ArrayList<>();
+        List<BufferedImage> gridImages = new ArrayList<>();
         for (int i = 0; i + 1 < rows.size(); i++)
             for (int j = 0; j + 1 < cols.size(); j++) {
                 List<Integer> rgbs = new ArrayList<>();
                 for (int x = cols.get(j); x < cols.get(j + 1); x++)
                     for (int y = rows.get(i); y < rows.get(i + 1); y++)
                         rgbs.add(image.getRGB(x, y));
-                squares.add(new ParsedGridSquare(i, j, averageRgbs(rgbs)));
+                averageRgbs.add(averageRgbs(rgbs));
+
+                gridImages.add(image.getSubimage(cols.get(j), rows.get(i), cols.get(j + 1) - cols.get(j), rows.get(i + 1) - rows.get(i)));
             }
 
-        List<Integer> rgbs = squares.stream()
-                .map(ParsedGridSquare::getRgb)
-                .collect(Collectors.toList());
-        Map<Integer, Integer> clusters = cluster(rgbs, numClusters);
-        Set<ParsedGridSquare> clusteredSquares = squares.stream()
-                .map(square -> new ParsedGridSquare(square.getRow(), square.getCol(), clusters.get(square.getRgb())))
-                .collect(Collectors.toSet());
+        Map<Integer, Integer> clusters = cluster(averageRgbs, numClusters);
+        List<String> foundText = googleAPIManager.batchFindText(gridImages);
 
-        return new ParsedGrid(clusteredSquares);
+        List<ParsedGridSquare> squares = new ArrayList<>();
+        for (int i = 0, index = 0; i + 1 < rows.size(); i++)
+            for (int j = 0; j + 1 < cols.size(); j++) {
+                squares.add(new ParsedGridSquare(i, j, clusters.get(averageRgbs.get(index)), foundText.get(index)));
+                index++;
+            }
+        return new ParsedGrid(squares);
     }
 
     private static Mat toMat(BufferedImage image) {

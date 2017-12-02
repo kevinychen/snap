@@ -35,7 +35,8 @@ class SnapResource implements SnapService {
         return ImageUtils.parseGrid(
             image,
             request.getGrid(),
-            request.getNumClusters());
+            request.getNumClusters(),
+            googleAPIManager);
     }
 
     @Override

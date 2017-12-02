@@ -1,13 +1,13 @@
 package com.kyc.snap;
 
-import java.util.Set;
+import java.util.List;
 
 import lombok.Data;
 
 @Data
 public class ParsedGrid {
 
-    private final Set<ParsedGridSquare> squares;
+    private final List<ParsedGridSquare> squares;
 
     @Data
     public static class ParsedGridSquare {
@@ -16,5 +16,6 @@ public class ParsedGrid {
         private final int col;
 
         private final int rgb;
+        private final String text;
     }
 }
