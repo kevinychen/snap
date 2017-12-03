@@ -1,6 +1,7 @@
 
 package com.kyc.snap;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
@@ -95,7 +96,8 @@ class ImageUtils {
                         rgbs.add(image.getRGB(x, y));
                 averageRgbs.add(averageRgbs(rgbs));
 
-                gridImages.add(image.getSubimage(cols.get(j), rows.get(i), cols.get(j + 1) - cols.get(j), rows.get(i + 1) - rows.get(i)));
+                gridImages.add(toBinaryImage(
+                    image.getSubimage(cols.get(j), rows.get(i), cols.get(j + 1) - cols.get(j), rows.get(i + 1) - rows.get(i))));
             }
 
         Map<Integer, Integer> clusters = cluster(averageRgbs, numClusters);
@@ -184,6 +186,19 @@ class ImageUtils {
             clusters.put(rgbs.get(i), centerRGBs.get(label));
         }
         return clusters;
+    }
+
+    private static BufferedImage toBinaryImage(BufferedImage image) {
+        BufferedImage binaryImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_BINARY);
+        for (int x = 0; x < image.getWidth(); x++)
+            for (int y = 0; y < image.getHeight(); y++)
+                binaryImage.setRGB(x, y, isLight(image.getRGB(x, y)) ? Color.white.getRGB() : Color.black.getRGB());
+        return binaryImage;
+    }
+
+    private static boolean isLight(int rgb) {
+        Color color = new Color(rgb);
+        return color.getRed() + color.getGreen() + color.getBlue() > 3 * 128;
     }
 
     private ImageUtils() {
