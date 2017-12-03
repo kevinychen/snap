@@ -23,6 +23,7 @@ import com.google.api.services.sheets.v4.model.CellFormat;
 import com.google.api.services.sheets.v4.model.Color;
 import com.google.api.services.sheets.v4.model.DimensionProperties;
 import com.google.api.services.sheets.v4.model.DimensionRange;
+import com.google.api.services.sheets.v4.model.ExtendedValue;
 import com.google.api.services.sheets.v4.model.GridRange;
 import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.RowData;
@@ -107,7 +108,7 @@ class GoogleAPIManager {
                                 .setSheetId(sheetId))), new Request()
                         .setUpdateDimensionProperties(new UpdateDimensionPropertiesRequest()
                             .setProperties(new DimensionProperties()
-                                .setPixelSize(20))
+                                .setPixelSize(40))
                             .setFields("pixelSize")
                             .setRange(new DimensionRange()
                                 .setSheetId(sheetId)
@@ -127,8 +128,10 @@ class GoogleAPIManager {
                                                 .setBackgroundColor(new Color()
                                                     .setRed(color.getRed() / 255f)
                                                     .setGreen(color.getGreen() / 255f)
-                                                    .setBlue(color.getBlue() / 255f)))))))
-                                    .setFields("userEnteredFormat.backgroundColor")
+                                                    .setBlue(color.getBlue() / 255f)))
+                                            .setUserEnteredValue(new ExtendedValue()
+                                                .setStringValue(square.getText()))))))
+                                    .setFields("userEnteredFormat.backgroundColor,userEnteredValue.stringValue")
                                     .setRange(new GridRange()
                                         .setSheetId(sheetId)
                                         .setStartRowIndex(square.getRow())
