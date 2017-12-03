@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -19,6 +20,7 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
+import com.google.api.services.sheets.v4.model.Border;
 import com.google.api.services.sheets.v4.model.CellData;
 import com.google.api.services.sheets.v4.model.CellFormat;
 import com.google.api.services.sheets.v4.model.Color;
@@ -29,6 +31,7 @@ import com.google.api.services.sheets.v4.model.GridRange;
 import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.RowData;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
+import com.google.api.services.sheets.v4.model.UpdateBordersRequest;
 import com.google.api.services.sheets.v4.model.UpdateCellsRequest;
 import com.google.api.services.sheets.v4.model.UpdateDimensionPropertiesRequest;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -122,26 +125,33 @@ class GoogleAPIManager {
             sheets.spreadsheets()
                 .batchUpdate(spreadsheet.getSpreadsheetId(), new BatchUpdateSpreadsheetRequest()
                     .setRequests(parsedGrid.getSquares().stream()
-                        .map(square -> {
-                            java.awt.Color color = new java.awt.Color(square.getRgb());
-                            return new Request()
+                        .flatMap(square -> {
+                            GridRange range = new GridRange()
+                                .setSheetId(sheetId)
+                                .setStartRowIndex(square.getRow())
+                                .setEndRowIndex(square.getRow() + 1)
+                                .setStartColumnIndex(square.getCol())
+                                .setEndColumnIndex(square.getCol() + 1);
+                            Request updateCellsRequest = new Request()
                                 .setUpdateCells(new UpdateCellsRequest()
                                     .setRows(ImmutableList.of(new RowData()
                                         .setValues(ImmutableList.of(new CellData()
                                             .setUserEnteredFormat(new CellFormat()
-                                                .setBackgroundColor(new Color()
-                                                    .setRed(color.getRed() / 255f)
-                                                    .setGreen(color.getGreen() / 255f)
-                                                    .setBlue(color.getBlue() / 255f)))
+                                                .setBackgroundColor(toColor(square.getRgb())))
                                             .setUserEnteredValue(new ExtendedValue()
                                                 .setStringValue(square.getText()))))))
                                     .setFields("userEnteredFormat.backgroundColor,userEnteredValue.stringValue")
-                                    .setRange(new GridRange()
-                                        .setSheetId(sheetId)
-                                        .setStartRowIndex(square.getRow())
-                                        .setEndRowIndex(square.getRow() + 1)
-                                        .setStartColumnIndex(square.getCol())
-                                        .setEndColumnIndex(square.getCol() + 1)));
+                                    .setRange(range));
+                            Request updateBordersRequest = new Request()
+                                .setUpdateBorders(new UpdateBordersRequest()
+                                    .setRight(new Border()
+                                        .setStyle("SOLID")
+                                        .setColor(toColor(square.getRightBorderRgb())))
+                                    .setBottom(new Border()
+                                        .setStyle("SOLID")
+                                        .setColor(toColor(square.getBottomBorderRgb())))
+                                    .setRange(range));
+                            return Stream.of(updateCellsRequest, updateBordersRequest);
                         })
                         .collect(Collectors.toList())))
                 .execute();
@@ -150,5 +160,13 @@ class GoogleAPIManager {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Color toColor(int rgb) {
+        java.awt.Color color = new java.awt.Color(rgb);
+        return new Color()
+            .setRed(color.getRed() / 255f)
+            .setGreen(color.getGreen() / 255f)
+            .setBlue(color.getBlue() / 255f);
     }
 }
