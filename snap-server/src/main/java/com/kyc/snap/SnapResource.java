@@ -6,10 +6,12 @@ class SnapResource implements SnapService {
 
     private final String productName;
     private final GoogleAPIManager googleAPIManager;
+    private final CrosswordManager crosswordManager;
 
-    public SnapResource(String productName, GoogleAPIManager googleAPIManager) {
+    public SnapResource(String productName, GoogleAPIManager googleAPIManager, CrosswordManager crosswordManager) {
         this.productName = productName;
         this.googleAPIManager = googleAPIManager;
+        this.crosswordManager = crosswordManager;
     }
 
     @Override
@@ -36,7 +38,9 @@ class SnapResource implements SnapService {
             image,
             request.getGrid(),
             request.getNumClusters(),
-            googleAPIManager);
+            request.getCrosswordThreshold(),
+            googleAPIManager,
+            crosswordManager);
     }
 
     @Override

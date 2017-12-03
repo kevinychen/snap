@@ -91,7 +91,8 @@ class ImageUtils {
         return new Grid(rows, cols);
     }
 
-    static ParsedGrid parseGrid(BufferedImage image, Grid grid, int numClusters, GoogleAPIManager googleAPIManager) {
+    static ParsedGrid parseGrid(BufferedImage image, Grid grid, int numClusters, double crosswordThreshold,
+            GoogleAPIManager googleAPIManager, CrosswordManager crosswordManager) {
         List<GridSquare> squares = new ArrayList<>();
         for (int i = 0; i < grid.getRows().size(); i++)
             for (int j = 0; j < grid.getCols().size(); j++) {
@@ -133,7 +134,14 @@ class ImageUtils {
                     return parsedSquare;
                 })
                 .collect(Collectors.toList());
-        return new ParsedGrid(parsedSquares);
+        ParsedGrid parsedGrid = new ParsedGrid(parsedSquares);
+        parsedGrid = crosswordManager.toCrossword(grid, parsedGrid, crosswordThreshold);
+        return parsedGrid;
+    }
+
+    static boolean isLight(int rgb) {
+        Color color = new Color(rgb);
+        return color.getRed() + color.getGreen() + color.getBlue() > 3 * 128;
     }
 
     private static Mat toMat(BufferedImage image) {
@@ -210,11 +218,6 @@ class ImageUtils {
             for (int y = 0; y < image.getHeight(); y++)
                 binaryImage.setRGB(x, y, isLight(image.getRGB(x, y)) ? Color.white.getRGB() : Color.black.getRGB());
         return binaryImage;
-    }
-
-    private static boolean isLight(int rgb) {
-        Color color = new Color(rgb);
-        return color.getRed() + color.getGreen() + color.getBlue() > 3 * 128;
     }
 
     @Data

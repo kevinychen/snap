@@ -9,4 +9,5 @@ public class ParseGridRequest {
     private final Grid grid;
 
     private int numClusters = 2;
+    private double crosswordThreshold = 0.6;
 }

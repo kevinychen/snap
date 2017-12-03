@@ -13,6 +13,7 @@ public class SnapServer extends Application<SnapConfiguration> {
     public void run(SnapConfiguration configuration, Environment environment) throws Exception {
         ImageUtils.load();
         GoogleAPIManager googleAPIManager = new GoogleAPIManager(configuration.getGoogleAPICredentialsFile());
-        environment.jersey().register(new SnapResource(configuration.getProductName(), googleAPIManager));
+        CrosswordManager crosswordManager = new CrosswordManager();
+        environment.jersey().register(new SnapResource(configuration.getProductName(), googleAPIManager, crosswordManager));
     }
 }
