@@ -110,7 +110,7 @@ class GoogleAPIManager {
                 .batchUpdate(spreadsheet.getSpreadsheetId(), new BatchUpdateSpreadsheetRequest()
                     .setRequests(ImmutableList.of(new Request()
                         .setUpdateCells(new UpdateCellsRequest()
-                            .setFields("userEnteredFormat")
+                            .setFields("userEnteredFormat,userEnteredValue")
                             .setRange(new GridRange()
                                 .setSheetId(sheetId))), new Request()
                         .setUpdateDimensionProperties(new UpdateDimensionPropertiesRequest()
