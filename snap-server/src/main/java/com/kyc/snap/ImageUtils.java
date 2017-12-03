@@ -9,12 +9,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.BadRequestException;
@@ -25,6 +23,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.TermCriteria;
 import org.opencv.imgproc.Imgproc;
 
+import com.kyc.snap.Grid.GridCol;
+import com.kyc.snap.Grid.GridRow;
 import com.kyc.snap.ParsedGrid.ParsedGridSquare;
 
 import jersey.repackaged.com.google.common.base.Preconditions;
@@ -61,8 +61,8 @@ class ImageUtils {
         Mat edges = canny(mat, cannyThreshold1, cannyThreshold2);
         Mat lines = hough(edges, houghThreshold, houghMinLineLength);
 
-        TreeSet<Integer> rows = new TreeSet<>();
-        TreeSet<Integer> cols = new TreeSet<>();
+        List<Integer> xs = new ArrayList<>();
+        List<Integer> ys = new ArrayList<>();
         for (int i = 0; i < lines.rows(); i++) {
             double[] data = lines.get(i, 0);
             boolean vertical = data[0] == data[2];
@@ -70,42 +70,45 @@ class ImageUtils {
             Preconditions.checkArgument(horizontal != vertical,
                 "Expected horizontal or vertical line but got (%s, %s), (%s, %s)",
                 data[0], data[1], data[2], data[3]);
-            if (horizontal)
-                rows.add((int) data[1]);
+            if (vertical)
+                xs.add((int) data[0]);
             else
-                cols.add((int) data[0]);
+                ys.add((int) data[1]);
         }
 
-        removeCloseValues(rows, minDistBetweenGridLines);
-        removeCloseValues(cols, minDistBetweenGridLines);
-
+        Collections.sort(xs);
+        Collections.sort(ys);
+        List<GridRow> rows = new ArrayList<>();
+        List<GridCol> cols = new ArrayList<>();
+        for (int i = 0; i + 1 < xs.size(); i++)
+            if (xs.get(i + 1) - xs.get(i) >= minDistBetweenGridLines)
+                cols.add(new GridCol(xs.get(i), xs.get(i + 1) - xs.get(i)));
+        for (int i = 0; i + 1 < ys.size(); i++)
+            if (ys.get(i + 1) - ys.get(i) >= minDistBetweenGridLines)
+                rows.add(new GridRow(ys.get(i), ys.get(i + 1) - ys.get(i)));
         return new Grid(rows, cols);
     }
 
     static ParsedGrid parseGrid(BufferedImage image, Grid grid, int numClusters, GoogleAPIManager googleAPIManager) {
-        List<Integer> rows = new ArrayList<>(grid.getRows());
-        List<Integer> cols = new ArrayList<>(grid.getCols());
-
         List<Integer> averageRgbs = new ArrayList<>();
         List<BufferedImage> gridImages = new ArrayList<>();
-        for (int i = 0; i + 1 < rows.size(); i++)
-            for (int j = 0; j + 1 < cols.size(); j++) {
+        for (GridRow row : grid.getRows())
+            for (GridCol col : grid.getCols()) {
                 List<Integer> rgbs = new ArrayList<>();
-                for (int x = cols.get(j); x < cols.get(j + 1); x++)
-                    for (int y = rows.get(i); y < rows.get(i + 1); y++)
+                for (int x = col.getStartX(); x < col.getStartX() + col.getWidth(); x++)
+                    for (int y = row.getStartY(); y < row.getStartY() + row.getHeight(); y++)
                         rgbs.add(image.getRGB(x, y));
                 averageRgbs.add(averageRgbs(rgbs));
-
-                gridImages.add(toBinaryImage(
-                    image.getSubimage(cols.get(j), rows.get(i), cols.get(j + 1) - cols.get(j), rows.get(i + 1) - rows.get(i))));
+                gridImages.add(toBinaryImage(image.getSubimage(col.getStartX(), row.getStartY(), col.getWidth(), row.getHeight())));
             }
 
         Map<Integer, Integer> clusters = cluster(averageRgbs, numClusters);
         List<String> foundText = googleAPIManager.batchFindText(gridImages);
 
         List<ParsedGridSquare> squares = new ArrayList<>();
-        for (int i = 0, index = 0; i + 1 < rows.size(); i++)
-            for (int j = 0; j + 1 < cols.size(); j++) {
+        int index = 0;
+        for (int i = 0; i < grid.getRows().size(); i++)
+            for (int j = 0; j < grid.getCols().size(); j++) {
                 squares.add(new ParsedGridSquare(i, j, clusters.get(averageRgbs.get(index)), foundText.get(index)));
                 index++;
             }
@@ -133,18 +136,6 @@ class ImageUtils {
         Mat lines = new Mat();
         Imgproc.HoughLinesP(edges, lines, 1, Math.PI / 2, threshold, minLineLength, 0);
         return lines;
-    }
-
-    private static void removeCloseValues(Set<Integer> values, int minDiffBetweenValues) {
-        Iterator<Integer> it = values.iterator();
-        int prevValue = Integer.MIN_VALUE / 2;
-        while (it.hasNext()) {
-            int value = it.next();
-            if (value - prevValue < minDiffBetweenValues)
-                it.remove();
-            else
-                prevValue = value;
-        }
     }
 
     private static int averageRgbs(Collection<Integer> rgbs) {

@@ -662,16 +662,9 @@ function paintGrid(rows, cols) {
   var ctx = drawCanvas.getContext('2d');
   ctx.strokeStyle = 'red';
   rows.forEach(function(row) {
-    ctx.beginPath();
-    ctx.moveTo(0, row);
-    ctx.lineTo(drawCanvas.width, row);
-    ctx.stroke();
-  });
-  cols.forEach(function(col) {
-    ctx.beginPath();
-    ctx.moveTo(col, 0);
-    ctx.lineTo(col, drawCanvas.height);
-    ctx.stroke();
+    cols.forEach(function(col) {
+      ctx.strokeRect(col.startX, row.startY, col.width, row.height);
+    });
   });
 }
 
@@ -690,7 +683,9 @@ function fetchGrid(cb) {
     success: function(result) {
       grid = result;
       paintGrid(result.rows, result.cols);
-      cb();
+      if (cb) {
+        cb();
+      }
     },
     error: function() {
       console.log("Error fetching grid");
@@ -713,14 +708,14 @@ function paintParsedGrid(squares) {
     .attr({width: showCanvas.width, height: showCanvas.height});
   var ctx = drawCanvas.getContext('2d');
   squares.forEach(function(square) {
-    var startX = grid.cols[square.col];
-    var endX = grid.cols[square.col + 1];
-    var startY = grid.rows[square.row];
-    var endY = grid.rows[square.row + 1];
+    var row = grid.rows[square.row];
+    var col = grid.cols[square.col];
     ctx.fillStyle = getHexColor(square.rgb);
-    ctx.fillRect((2 * startX + endX) / 3, (2 * startY + endY) / 3, (endX - startX) / 3, (endY - startY) / 3);
+    ctx.fillRect(col.startX + col.width / 2, row.startY + row.height / 4, col.width / 4, row.height / 4);
     ctx.strokeStyle = 'black';
-    ctx.strokeRect((2 * startX + endX) / 3, (2 * startY + endY) / 3, (endX - startX) / 3, (endY - startY) / 3);
+    ctx.strokeRect(col.startX + col.width / 2, row.startY + row.height / 4, col.width / 4, row.height / 4);
+    ctx.fillStyle = 'red';
+    ctx.fillText(square.text, col.startX + col.width / 5, row.startY + row.height * 4 / 5);
   });
 }
 
@@ -737,7 +732,9 @@ function parseGrid(cb) {
     success: function(result) {
       parsedGrid = result;
       paintParsedGrid(result.squares);
-      cb();
+      if (cb) {
+        cb();
+      }
     },
     error: function() {
       console.log("Error parsing grid");
