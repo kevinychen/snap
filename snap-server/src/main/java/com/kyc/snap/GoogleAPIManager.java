@@ -5,9 +5,10 @@ import java.awt.image.BufferedImage;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -71,23 +72,26 @@ class GoogleAPIManager {
         }
     }
 
-    List<String> batchFindText(List<BufferedImage> images) {
+    Map<BufferedImage, String> batchFindText(List<BufferedImage> images) {
         try (ImageAnnotatorClient client = ImageAnnotatorClient.create(imageAnnotatorSettings)) {
-            return StreamSupport.stream(Iterables.partition(images, TEXT_DETECTION_IMAGE_LIMIT).spliterator(), false)
-                .flatMap(partition -> {
-                    BatchAnnotateImagesResponse response = client.batchAnnotateImages(partition.stream()
-                        .map(image -> AnnotateImageRequest.newBuilder()
-                            .addFeatures(TEXT_DETECTION_FEATURE)
-                            .setImage(Image.newBuilder().setContent(ByteString.copyFrom(ImageUtils.toBytes(image))).build())
-                            .build())
+            Map<BufferedImage, String> result = new HashMap<>();
+            for (List<BufferedImage> partition : Iterables.partition(images, TEXT_DETECTION_IMAGE_LIMIT)) {
+                BatchAnnotateImagesResponse response = client.batchAnnotateImages(partition.stream()
+                    .map(image -> AnnotateImageRequest.newBuilder()
+                        .addFeatures(TEXT_DETECTION_FEATURE)
+                        .setImage(Image.newBuilder().setContent(ByteString.copyFrom(ImageUtils.toBytes(image))).build())
+                        .build())
                         .collect(Collectors.toList()));
-                    return response.getResponsesList().stream()
+                List<String> texts = response.getResponsesList().stream()
                         .map(res -> res.getTextAnnotationsList().stream()
                             .map(EntityAnnotation::getDescription)
                             .max((s1, s2) -> Integer.compare(s1.length(), s2.length()))
-                            .orElse(""));
-                })
-                .collect(Collectors.toList());
+                            .orElse(""))
+                        .collect(Collectors.toList());
+                for (int i = 0; i < partition.size(); i++)
+                    result.put(partition.get(i), texts.get(i));
+            }
+            return result;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

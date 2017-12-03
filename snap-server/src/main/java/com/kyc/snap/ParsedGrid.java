@@ -15,7 +15,9 @@ public class ParsedGrid {
         private final int row;
         private final int col;
 
-        private final int rgb;
-        private final String text;
+        private int rgb = -1;
+        private String text = "";
+        private int rightBorderRgb = -1;
+        private int bottomBorderRgb = -1;
     }
 }

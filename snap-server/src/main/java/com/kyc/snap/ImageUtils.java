@@ -8,11 +8,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.BadRequestException;
@@ -28,6 +29,7 @@ import com.kyc.snap.Grid.GridRow;
 import com.kyc.snap.ParsedGrid.ParsedGridSquare;
 
 import jersey.repackaged.com.google.common.base.Preconditions;
+import lombok.Data;
 import nu.pattern.OpenCV;
 
 class ImageUtils {
@@ -90,29 +92,48 @@ class ImageUtils {
     }
 
     static ParsedGrid parseGrid(BufferedImage image, Grid grid, int numClusters, GoogleAPIManager googleAPIManager) {
-        List<Integer> averageRgbs = new ArrayList<>();
-        List<BufferedImage> gridImages = new ArrayList<>();
-        for (GridRow row : grid.getRows())
-            for (GridCol col : grid.getCols()) {
-                List<Integer> rgbs = new ArrayList<>();
-                for (int x = col.getStartX(); x < col.getStartX() + col.getWidth(); x++)
-                    for (int y = row.getStartY(); y < row.getStartY() + row.getHeight(); y++)
-                        rgbs.add(image.getRGB(x, y));
-                averageRgbs.add(averageRgbs(rgbs));
-                gridImages.add(toBinaryImage(image.getSubimage(col.getStartX(), row.getStartY(), col.getWidth(), row.getHeight())));
-            }
-
-        Map<Integer, Integer> clusters = cluster(averageRgbs, numClusters);
-        List<String> foundText = googleAPIManager.batchFindText(gridImages);
-
-        List<ParsedGridSquare> squares = new ArrayList<>();
-        int index = 0;
+        List<GridSquare> squares = new ArrayList<>();
         for (int i = 0; i < grid.getRows().size(); i++)
             for (int j = 0; j < grid.getCols().size(); j++) {
-                squares.add(new ParsedGridSquare(i, j, clusters.get(averageRgbs.get(index)), foundText.get(index)));
-                index++;
+                GridRow row = grid.getRows().get(i);
+                GridCol col = grid.getCols().get(j);
+                GridSquare square = new GridSquare(i, j);
+                square.rgb = averageRgbs(image, col.getStartX(), row.getStartY(), col.getWidth(), row.getHeight());
+                square.image = toBinaryImage(image.getSubimage(col.getStartX(), row.getStartY(), col.getWidth(), row.getHeight()));
+                if (i + 1 < grid.getRows().size()) {
+                    square.bottomBorderRgb = averageRgbs(image, col.getStartX(), row.getStartY() + row.getHeight(),
+                        col.getWidth(), grid.getRows().get(i + 1).getStartY() - (row.getStartY() + row.getHeight()));
+                }
+                if (j + 1 < grid.getCols().size()) {
+                    square.rightBorderRgb = averageRgbs(image, col.getStartX() + col.getWidth(), row.getStartY(),
+                        grid.getCols().get(j + 1).getStartX() - (col.getStartX() + col.getWidth()), row.getHeight());
+                }
+                squares.add(square);
             }
-        return new ParsedGrid(squares);
+
+        Map<Integer, Integer> squareRgbClusters = cluster(squares.stream()
+            .map(GridSquare::getRgb)
+            .filter(rgb -> rgb != -1)
+            .collect(Collectors.toList()), numClusters);
+        Map<BufferedImage, String> texts = googleAPIManager.batchFindText(squares.stream()
+            .map(GridSquare::getImage)
+            .collect(Collectors.toList()));
+        Map<Integer, Integer> borderRgbClusters = cluster(squares.stream()
+            .flatMap(square -> Stream.of(square.rightBorderRgb, square.bottomBorderRgb))
+            .filter(rgb -> rgb != -1)
+            .collect(Collectors.toList()), numClusters);
+
+        List<ParsedGridSquare> parsedSquares = squares.stream()
+                .map(square -> {
+                    ParsedGridSquare parsedSquare = new ParsedGridSquare(square.row, square.col);
+                    parsedSquare.setRgb(squareRgbClusters.get(square.rgb));
+                    parsedSquare.setText(texts.get(square.image));
+                    parsedSquare.setRightBorderRgb(borderRgbClusters.getOrDefault(square.rightBorderRgb, -1));
+                    parsedSquare.setBottomBorderRgb(borderRgbClusters.getOrDefault(square.bottomBorderRgb, -1));
+                    return parsedSquare;
+                })
+                .collect(Collectors.toList());
+        return new ParsedGrid(parsedSquares);
     }
 
     private static Mat toMat(BufferedImage image) {
@@ -138,15 +159,19 @@ class ImageUtils {
         return lines;
     }
 
-    private static int averageRgbs(Collection<Integer> rgbs) {
-        long sumRed = 0, sumGreen = 0, sumBlue = 0;
-        for (int rgb : rgbs) {
-            AdjustedRGB adjusted = AdjustedRGB.from(rgb);
-            sumRed += adjusted.getRedSquared();
-            sumGreen += adjusted.getGreenSquared();
-            sumBlue += adjusted.getBlueSquared();
-        }
-        return new AdjustedRGB(sumRed / rgbs.size(), sumGreen / rgbs.size(), sumBlue / rgbs.size()).toRGB();
+    private static int averageRgbs(BufferedImage image, int startX, int startY, int width, int height) {
+        long sumRed = 0, sumGreen = 0, sumBlue = 0, numRgbs = 0;
+        for (int x = startX; x < startX + width; x++)
+            for (int y = startY; y < startY + height; y++) {
+                AdjustedRGB adjusted = AdjustedRGB.from(image.getRGB(x, y));
+                sumRed += adjusted.getRedSquared();
+                sumGreen += adjusted.getGreenSquared();
+                sumBlue += adjusted.getBlueSquared();
+                numRgbs++;
+            }
+        if (numRgbs == 0)
+            return -1;
+        return new AdjustedRGB(sumRed / numRgbs, sumGreen / numRgbs, sumBlue / numRgbs).toRGB();
     }
 
     private static Map<Integer, Integer> cluster(List<Integer> rgbs, int numClusters) {
@@ -190,6 +215,17 @@ class ImageUtils {
     private static boolean isLight(int rgb) {
         Color color = new Color(rgb);
         return color.getRed() + color.getGreen() + color.getBlue() > 3 * 128;
+    }
+
+    @Data
+    private static class GridSquare {
+        private final int row;
+        private final int col;
+
+        private int rgb;
+        private BufferedImage image;
+        private int rightBorderRgb;
+        private int bottomBorderRgb;
     }
 
     private ImageUtils() {
