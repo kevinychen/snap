@@ -134,9 +134,9 @@ class ImageUtils {
                     return parsedSquare;
                 })
                 .collect(Collectors.toList());
-        ParsedGrid parsedGrid = new ParsedGrid(parsedSquares);
-        return crosswordManager.toCrosswordGrid(grid, parsedGrid, crosswordThreshold)
-            .map(crosswordGrid -> crosswordManager.toParsedGrid(grid, parsedGrid, crosswordGrid))
+        ParsedGrid parsedGrid = new ParsedGrid(grid.getRows().size(), grid.getCols().size(), parsedSquares);
+        return crosswordManager.toCrosswordGrid(parsedGrid, crosswordThreshold)
+            .map(crosswordGrid -> crosswordManager.toParsedGrid(parsedGrid, crosswordGrid))
             .orElse(parsedGrid);
     }
 

@@ -7,6 +7,8 @@ import lombok.Data;
 @Data
 public class ParsedGrid {
 
+    private final int numRows;
+    private final int numCols;
     private final List<ParsedGridSquare> squares;
 
     @Data

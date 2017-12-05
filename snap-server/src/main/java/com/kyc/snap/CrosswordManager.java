@@ -31,8 +31,8 @@ class CrosswordManager {
 
     private static final Pattern NUMBER_PATTERN = Pattern.compile("^[0-9]+");
 
-    Optional<CrosswordGrid> toCrosswordGrid(Grid grid, ParsedGrid parsedGrid, double confidence) {
-        BinaryParsedSquare[][] squares = new BinaryParsedSquare[grid.getRows().size()][grid.getCols().size()];
+    Optional<CrosswordGrid> toCrosswordGrid(ParsedGrid parsedGrid, double confidence) {
+        BinaryParsedSquare[][] squares = new BinaryParsedSquare[parsedGrid.getNumRows()][parsedGrid.getNumCols()];
         for (ParsedGridSquare square : parsedGrid.getSquares()) {
             BinaryParsedSquare binarySquare = new BinaryParsedSquare();
             binarySquare.text = square.getText();
@@ -74,8 +74,8 @@ class CrosswordManager {
                 : Optional.empty();
     }
 
-    ParsedGrid toParsedGrid(Grid grid, ParsedGrid parsedGrid, CrosswordGrid crosswordGrid) {
-        String[][] numbers = new String[grid.getRows().size()][grid.getCols().size()];
+    ParsedGrid toParsedGrid(ParsedGrid parsedGrid, CrosswordGrid crosswordGrid) {
+        String[][] numbers = new String[parsedGrid.getNumRows()][parsedGrid.getNumCols()];
         for (int row = 0; row < numbers.length; row++)
             for (int col = 0; col < numbers[row].length; col++)
                 numbers[row][col] = "";
@@ -91,7 +91,7 @@ class CrosswordManager {
                     return newSquare;
                 })
                 .collect(Collectors.toList());
-        return new ParsedGrid(newSquares);
+        return new ParsedGrid(parsedGrid.getNumRows(), parsedGrid.getNumCols(), newSquares);
     }
 
     CrosswordCluesList parseStandardCluesFormat(String cluesString) {
