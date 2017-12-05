@@ -12,8 +12,7 @@ public class CrosswordGrid {
     @Data
     public static final class CrosswordBlank {
 
-        private final String number;
-        private final CrosswordClueOrientation orientation;
+        private final CrosswordCluePosition position;
         private final int row;
         private final int col;
         private final int length;

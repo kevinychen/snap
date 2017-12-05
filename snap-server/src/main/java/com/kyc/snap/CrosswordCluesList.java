@@ -12,8 +12,7 @@ public class CrosswordCluesList {
     @Data
     public static class CrosswordClue {
 
-        private final String number;
-        private final CrosswordClueOrientation orientation;
+        private final CrosswordCluePosition position;
         private final String clue;
     }
 }

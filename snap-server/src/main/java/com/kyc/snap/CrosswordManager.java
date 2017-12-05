@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
+import com.kyc.snap.CrosswordCluePosition.CrosswordClueOrientation;
 import com.kyc.snap.CrosswordCluesList.CrosswordClue;
 import com.kyc.snap.CrosswordGrid.CrosswordBlank;
 import com.kyc.snap.ParsedGrid.ParsedGridSquare;
@@ -59,13 +60,15 @@ class CrosswordManager {
                     while (adjacentToRight(squares, row, col + acrossLen - 1))
                         acrossLen++;
                     if (acrossLen > 1) {
-                        blanks.add(new CrosswordBlank(clueNumber, CrosswordClueOrientation.ACROSS, row, col, acrossLen));
+                        blanks.add(new CrosswordBlank(new CrosswordCluePosition(clueNumber, CrosswordClueOrientation.ACROSS),
+                            row, col, acrossLen));
                     }
                     int downLen = 1;
                     while (adjacentToBottom(squares, row + downLen - 1, col))
                         downLen++;
                     if (downLen > 1) {
-                        blanks.add(new CrosswordBlank(clueNumber, CrosswordClueOrientation.DOWN, row, col, downLen));
+                        blanks.add(new CrosswordBlank(new CrosswordCluePosition(clueNumber, CrosswordClueOrientation.DOWN),
+                            row, col, acrossLen));
                     }
                 }
             }
@@ -80,7 +83,7 @@ class CrosswordManager {
             for (int col = 0; col < numbers[row].length; col++)
                 numbers[row][col] = "";
         for (CrosswordBlank blank : crosswordGrid.getBlanks())
-            numbers[blank.getRow()][blank.getCol()] = blank.getNumber();
+            numbers[blank.getRow()][blank.getCol()] = blank.getPosition().getNumber();
         List<ParsedGridSquare> newSquares = parsedGrid.getSquares().stream()
                 .map(square -> {
                     ParsedGridSquare newSquare = new ParsedGridSquare(square.getRow(), square.getCol());
@@ -106,11 +109,12 @@ class CrosswordManager {
                 long nextNumber = Long.parseLong(matcher.group());
                 if (nextNumber < currNumber)
                     downClues = true;
-                if (currNumber != -1)
+                if (currNumber != -1) {
                     clues.add(new CrosswordClue(
-                        String.valueOf(currNumber),
-                        (downClues ? CrosswordClueOrientation.DOWN : CrosswordClueOrientation.ACROSS),
+                        new CrosswordCluePosition(String.valueOf(currNumber),
+                            (downClues ? CrosswordClueOrientation.DOWN : CrosswordClueOrientation.ACROSS)),
                         Joiner.on(" ").join(currentClue)));
+                }
                 currNumber = nextNumber;
                 currentClue.clear();
                 line = line.substring(matcher.group().length());
@@ -144,7 +148,7 @@ class CrosswordManager {
                 && clues.stream().map(clue -> clue.getClue().charAt(0)).distinct().count() == 1) {
             for (int i = 0; i < clues.size(); i++) {
                 CrosswordClue clue = clues.get(i);
-                clues.set(i, new CrosswordClue(clue.getNumber(), clue.getOrientation(), clue.getClue().substring(1)));
+                clues.set(i, new CrosswordClue(clue.getPosition(), clue.getClue().substring(1)));
             }
         }
     }
