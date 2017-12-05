@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -120,32 +121,6 @@ class CrosswordManager {
         return new CrosswordCluesList(clues);
     }
 
-    List<CrosswordClueResult> solveClue(String clue, int numLetters) {
-        try {
-            URL url = new URL("http://www.wordplays.com/crossword-solver");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            try (PrintWriter writer = new PrintWriter(connection.getOutputStream())) {
-                writer.print(String.format(
-                    "clue=%1$s&pattern=&phrase=%1$s&anagram-patt=&anagram-len=&roman-num=&vand=1&rejected=&cks=&ishm=&mvr=&ty=0",
-                    URLEncoder.encode(clue, "UTF-8")));
-            }
-            Element wordList = Jsoup.parse(CharStreams.toString(new InputStreamReader(connection.getInputStream(), "UTF-8")))
-                .getElementById("wordlists");
-            return Streams.concat(wordList.getElementsByClass("even").stream(), wordList.getElementsByClass("odd").stream())
-                .map(row -> {
-                    String answer = Iterables.getOnlyElement(row.getElementsByTag("a")).text();
-                    int numStars = Iterables.getOnlyElement(row.getElementsByClass("stars")).children().size();
-                    return new CrosswordClueResult(answer, numStars);
-                })
-                .collect(Collectors.toList());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private boolean isAcrossStart(BinaryParsedSquare[][] squares, int row, int col) {
         return (col == 0 || !squares[row][col - 1].light || !squares[row][col - 1].rightBorderLight)
                 && adjacentToRight(squares, row, col);
@@ -171,6 +146,32 @@ class CrosswordManager {
                 CrosswordClue clue = clues.get(i);
                 clues.set(i, new CrosswordClue(clue.getNumber(), clue.getOrientation(), clue.getClue().substring(1)));
             }
+        }
+    }
+
+    private List<CrosswordClueResult> solveClue(String clue, int numLetters) {
+        try {
+            URL url = new URL("http://www.wordplays.com/crossword-solver");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            try (PrintWriter writer = new PrintWriter(connection.getOutputStream())) {
+                writer.print(String.format(
+                    "clue=%1$s&pattern=%2$s&phrase=%1$s&anagram-patt=%2$s&anagram-len=&roman-num=&vand=1&rejected=&cks=&ishm=&mvr=&ty=0",
+                    URLEncoder.encode(clue, "UTF-8"), Joiner.on("").join(Collections.nCopies(numLetters, "?"))));
+            }
+            Element wordList = Jsoup.parse(CharStreams.toString(new InputStreamReader(connection.getInputStream(), "UTF-8")))
+                .getElementById("wordlists");
+            return Streams.concat(wordList.getElementsByClass("even").stream(), wordList.getElementsByClass("odd").stream())
+                .map(row -> {
+                    String answer = Iterables.getOnlyElement(row.getElementsByTag("a")).text();
+                    int numStars = Iterables.getOnlyElement(row.getElementsByClass("stars")).children().size();
+                    return new CrosswordClueResult(answer, numStars);
+                })
+                .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
