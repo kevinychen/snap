@@ -1,8 +1,20 @@
 package com.kyc.snap;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Streams;
+import com.google.common.io.CharStreams;
 import com.kyc.snap.ParsedGrid.ParsedGridSquare;
 
 import lombok.Data;
@@ -51,6 +63,32 @@ class CrosswordManager {
             })
             .collect(Collectors.toList());
         return new ParsedGrid(newSquares);
+    }
+
+    List<CrosswordClueResult> solveClue(String clue, int numLetters) {
+        try {
+            URL url = new URL("http://www.wordplays.com/crossword-solver");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            try (PrintWriter writer = new PrintWriter(connection.getOutputStream())) {
+                writer.print(String.format(
+                    "clue=%1$s&pattern=&phrase=%1$s&anagram-patt=&anagram-len=&roman-num=&vand=1&rejected=&cks=&ishm=&mvr=&ty=0",
+                    URLEncoder.encode(clue, "UTF-8")));
+            }
+            Element wordList = Jsoup.parse(CharStreams.toString(new InputStreamReader(connection.getInputStream(), "UTF-8")))
+                .getElementById("wordlists");
+            return Streams.concat(wordList.getElementsByClass("even").stream(), wordList.getElementsByClass("odd").stream())
+                .map(row -> {
+                    String answer = Iterables.getOnlyElement(row.getElementsByTag("a")).text();
+                    int numStars = Iterables.getOnlyElement(row.getElementsByClass("stars")).children().size();
+                    return new CrosswordClueResult(answer, numStars);
+                })
+                .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private boolean isClueStartSquare(BinaryParsedSquare[][] squares, int row, int col) {
