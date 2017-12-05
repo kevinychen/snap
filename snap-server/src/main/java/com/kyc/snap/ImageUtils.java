@@ -135,8 +135,9 @@ class ImageUtils {
                 })
                 .collect(Collectors.toList());
         ParsedGrid parsedGrid = new ParsedGrid(parsedSquares);
-        parsedGrid = crosswordManager.toCrossword(grid, parsedGrid, crosswordThreshold);
-        return parsedGrid;
+        return crosswordManager.toCrosswordGrid(grid, parsedGrid, crosswordThreshold)
+            .map(crosswordGrid -> crosswordManager.toParsedGrid(grid, parsedGrid, crosswordGrid))
+            .orElse(parsedGrid);
     }
 
     static boolean isLight(int rgb) {

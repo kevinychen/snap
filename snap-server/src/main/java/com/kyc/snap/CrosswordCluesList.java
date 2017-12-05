@@ -13,12 +13,7 @@ public class CrosswordCluesList {
     public static class CrosswordClue {
 
         private final String number;
-        private final Orientation orientation;
+        private final CrosswordClueOrientation orientation;
         private final String clue;
-    }
-
-    public static enum Orientation {
-        ACROSS,
-        DOWN,
     }
 }

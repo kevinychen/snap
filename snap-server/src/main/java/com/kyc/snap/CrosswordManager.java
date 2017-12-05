@@ -8,6 +8,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -20,7 +21,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
 import com.kyc.snap.CrosswordCluesList.CrosswordClue;
-import com.kyc.snap.CrosswordCluesList.Orientation;
+import com.kyc.snap.CrosswordGrid.CrosswordBlank;
 import com.kyc.snap.ParsedGrid.ParsedGridSquare;
 
 import lombok.Data;
@@ -29,7 +30,7 @@ class CrosswordManager {
 
     private static final Pattern NUMBER_PATTERN = Pattern.compile("^[0-9]+");
 
-    ParsedGrid toCrossword(Grid grid, ParsedGrid parsedGrid, double confidence) {
+    Optional<CrosswordGrid> toCrosswordGrid(Grid grid, ParsedGrid parsedGrid, double confidence) {
         BinaryParsedSquare[][] squares = new BinaryParsedSquare[grid.getRows().size()][grid.getCols().size()];
         for (ParsedGridSquare square : parsedGrid.getSquares()) {
             BinaryParsedSquare binarySquare = new BinaryParsedSquare();
@@ -45,31 +46,50 @@ class CrosswordManager {
                     squares[row][col] = new BinaryParsedSquare();
 
         int clueIndex = 0;
-        int numCorrectClueIndices = 0;
+        long numCorrectClueIndices = 0;
+        List<CrosswordBlank> blanks = new ArrayList<>();
         for (int row = 0; row < squares.length; row++)
-            for (int col = 0; col < squares[row].length; col++)
-                if (isClueStartSquare(squares, row, col)) {
-                    String clue = clueIndex + 1 + "";
-                    if (squares[row][col].text.replaceAll("[^0-9]", "").equals(clue))
+            for (int col = 0; col < squares[row].length; col++) {
+                if (isAcrossStart(squares, row, col) || isDownStart(squares, row, col)) {
+                    String clueNumber = (++clueIndex) + "";
+                    if (squares[row][col].text.replaceAll("[^0-9]", "").equals(clueNumber))
                         numCorrectClueIndices++;
-                    squares[row][col].text = clue;
-                    clueIndex++;
-                } else
-                    squares[row][col].text = "";
+                    int acrossLen = 1;
+                    while (adjacentToRight(squares, row, col + acrossLen - 1))
+                        acrossLen++;
+                    if (acrossLen > 1) {
+                        blanks.add(new CrosswordBlank(clueNumber, CrosswordClueOrientation.ACROSS, row, col, acrossLen));
+                    }
+                    int downLen = 1;
+                    while (adjacentToBottom(squares, row + downLen - 1, col))
+                        downLen++;
+                    if (downLen > 1) {
+                        blanks.add(new CrosswordBlank(clueNumber, CrosswordClueOrientation.DOWN, row, col, downLen));
+                    }
+                }
+            }
+        return numCorrectClueIndices > confidence * clueIndex
+                ? Optional.of(new CrosswordGrid(blanks))
+                : Optional.empty();
+    }
 
-        if (numCorrectClueIndices <= confidence * clueIndex)
-            return parsedGrid;
-
+    ParsedGrid toParsedGrid(Grid grid, ParsedGrid parsedGrid, CrosswordGrid crosswordGrid) {
+        String[][] numbers = new String[grid.getRows().size()][grid.getCols().size()];
+        for (int row = 0; row < numbers.length; row++)
+            for (int col = 0; col < numbers[row].length; col++)
+                numbers[row][col] = "";
+        for (CrosswordBlank blank : crosswordGrid.getBlanks())
+            numbers[blank.getRow()][blank.getCol()] = blank.getNumber();
         List<ParsedGridSquare> newSquares = parsedGrid.getSquares().stream()
-            .map(square -> {
-                ParsedGridSquare newSquare = new ParsedGridSquare(square.getRow(), square.getCol());
-                newSquare.setText(squares[square.getRow()][square.getCol()].text);
-                newSquare.setRgb(square.getRgb());
-                newSquare.setRightBorderRgb(square.getRightBorderRgb());
-                newSquare.setBottomBorderRgb(square.getBottomBorderRgb());
-                return newSquare;
-            })
-            .collect(Collectors.toList());
+                .map(square -> {
+                    ParsedGridSquare newSquare = new ParsedGridSquare(square.getRow(), square.getCol());
+                    newSquare.setText(numbers[square.getRow()][square.getCol()]);
+                    newSquare.setRgb(square.getRgb());
+                    newSquare.setRightBorderRgb(square.getRightBorderRgb());
+                    newSquare.setBottomBorderRgb(square.getBottomBorderRgb());
+                    return newSquare;
+                })
+                .collect(Collectors.toList());
         return new ParsedGrid(newSquares);
     }
 
@@ -88,7 +108,7 @@ class CrosswordManager {
                 if (currNumber != -1)
                     clues.add(new CrosswordClue(
                         String.valueOf(currNumber),
-                        (downClues ? Orientation.DOWN : Orientation.ACROSS),
+                        (downClues ? CrosswordClueOrientation.DOWN : CrosswordClueOrientation.ACROSS),
                         Joiner.on(" ").join(currentClue)));
                 currNumber = nextNumber;
                 currentClue.clear();
@@ -126,16 +146,22 @@ class CrosswordManager {
         }
     }
 
-    private boolean isClueStartSquare(BinaryParsedSquare[][] squares, int row, int col) {
-        if ((row == 0 || !squares[row - 1][col].light || !squares[row - 1][col].bottomBorderLight)
-                && squares[row][col].bottomBorderLight && row != squares.length - 1 && squares[row + 1][col].light) {
-            return true;
-        }
-        if ((col == 0 || !squares[row][col - 1].light || !squares[row][col - 1].rightBorderLight)
-                && squares[row][col].rightBorderLight && col != squares[row].length - 1 && squares[row][col + 1].light) {
-            return true;
-        }
-        return false;
+    private boolean isAcrossStart(BinaryParsedSquare[][] squares, int row, int col) {
+        return (col == 0 || !squares[row][col - 1].light || !squares[row][col - 1].rightBorderLight)
+                && adjacentToRight(squares, row, col);
+    }
+
+    private boolean adjacentToRight(BinaryParsedSquare[][] squares, int row, int col) {
+        return squares[row][col].rightBorderLight && col != squares[row].length - 1 && squares[row][col + 1].light;
+    }
+
+    private boolean isDownStart(BinaryParsedSquare[][] squares, int row, int col) {
+        return (row == 0 || !squares[row - 1][col].light || !squares[row - 1][col].bottomBorderLight)
+                && adjacentToBottom(squares, row, col);
+    }
+
+    private boolean adjacentToBottom(BinaryParsedSquare[][] squares, int row, int col) {
+        return squares[row][col].bottomBorderLight && row != squares.length - 1 && squares[row + 1][col].light;
     }
 
     private void removeCommonPrefixes(List<CrosswordClue> clues) {
