@@ -6,20 +6,28 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
+import com.kyc.snap.CrosswordCluesList.CrosswordClue;
+import com.kyc.snap.CrosswordCluesList.Orientation;
 import com.kyc.snap.ParsedGrid.ParsedGridSquare;
 
 import lombok.Data;
 
 class CrosswordManager {
+
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("^[0-9]+");
 
     ParsedGrid toCrossword(Grid grid, ParsedGrid parsedGrid, double confidence) {
         BinaryParsedSquare[][] squares = new BinaryParsedSquare[grid.getRows().size()][grid.getCols().size()];
@@ -65,6 +73,33 @@ class CrosswordManager {
         return new ParsedGrid(newSquares);
     }
 
+    CrosswordCluesList parseStandardCluesFormat(String cluesString) {
+        boolean downClues = false;
+        long currNumber = -1;
+        List<String> currentClue = new ArrayList<>();
+        List<CrosswordClue> clues = new ArrayList<>();
+        for (String line : cluesString.split("\n")) {
+            line = line.trim();
+            Matcher matcher = NUMBER_PATTERN.matcher(line);
+            if (matcher.find()) {
+                long nextNumber = Long.parseLong(matcher.group());
+                if (nextNumber < currNumber)
+                    downClues = true;
+                if (currNumber != -1)
+                    clues.add(new CrosswordClue(
+                        String.valueOf(currNumber),
+                        (downClues ? Orientation.DOWN : Orientation.ACROSS),
+                        Joiner.on(" ").join(currentClue)));
+                currNumber = nextNumber;
+                currentClue.clear();
+                line = line.substring(matcher.group().length());
+            }
+            currentClue.add(line);
+        }
+        removeCommonPrefixes(clues);
+        return new CrosswordCluesList(clues);
+    }
+
     List<CrosswordClueResult> solveClue(String clue, int numLetters) {
         try {
             URL url = new URL("http://www.wordplays.com/crossword-solver");
@@ -101,6 +136,16 @@ class CrosswordManager {
             return true;
         }
         return false;
+    }
+
+    private void removeCommonPrefixes(List<CrosswordClue> clues) {
+        while (clues.stream().allMatch(clue -> !clue.getClue().isEmpty())
+                && clues.stream().map(clue -> clue.getClue().charAt(0)).distinct().count() == 1) {
+            for (int i = 0; i < clues.size(); i++) {
+                CrosswordClue clue = clues.get(i);
+                clues.set(i, new CrosswordClue(clue.getNumber(), clue.getOrientation(), clue.getClue().substring(1)));
+            }
+        }
     }
 
     @Data
