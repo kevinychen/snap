@@ -44,6 +44,14 @@ class SnapResource implements SnapService {
     }
 
     @Override
+    public ParsedGrid solveCrossword(SolveCrosswordRequest request) {
+        ParsedGrid parsedGrid = request.getParsedGrid();
+        CrosswordGrid crosswordGrid = crosswordManager.toCrosswordGrid(parsedGrid, 1.0).get();
+        CrosswordCluesList clues = crosswordManager.parseStandardCluesFormat(request.getCluesString());
+        return crosswordManager.solveCrossword(parsedGrid, crosswordGrid, clues);
+    }
+
+    @Override
     public String exportToGoogleSheets(ExportToGoogleSheetsRequest request) {
         return googleAPIManager.exportToGoogleSheets(request.getParsedGrid());
     }

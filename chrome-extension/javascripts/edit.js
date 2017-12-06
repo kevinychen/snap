@@ -70,7 +70,7 @@ function prepareEditArea(req) {
     case "image_search":
     case "parse_grid": {
       if (req.type == "image_search" || req.type == "parse_grid") {
-        document.getElementById("overlay").style.display = "block";
+        $('#overlay').show().css('display', 'block');
       }
       $("#save-image").attr({src:images[0]}).load(function(){
         if ("selected" == req.userAction) {
@@ -341,6 +341,7 @@ function newAction(tool) {
   switch (tool) {
     case "gridify": {
       a = new GridifyAction(commit);
+      a.isText = true;
       break;
     }
     case "crop": {
@@ -396,6 +397,7 @@ function selectTool(tool) {
 
   switch (tool) {
     case "parse-grid": break;
+    case "solve-crossword": break;
     case "color": color(); break;
     case "done": {
       if (currentAction != null) currentAction.done();
@@ -742,6 +744,29 @@ function parseGrid(cb) {
   });
 }
 
+function solveCrossword(cb) {
+  $.ajax({
+    url: "http://localhost:7627/solveCrossword",
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      grid: grid,
+      parsedGrid: parsedGrid,
+      cluesString: $('#solve-crossword-clues').val(),
+    }),
+    processData: false,
+    success: function(result) {
+      console.log(result); // TODO
+      if (cb) {
+        cb();
+      }
+    },
+    error: function() {
+      console.log("Error solving crossword");
+    },
+  });
+}
+
 function uploadToGoogleSheets() {
   $.ajax({
     url: "http://localhost:7627/export/googleSheets",
@@ -768,6 +793,7 @@ var GridifyAction = function(resultCb) {
     $('#parse-grid').hide();
     resultCb({data: showCanvas.getContext('2d').getImageData(0, 0, showCanvas.width, showCanvas.height)});
   }
+  this.isUndoable = function() { return false; }
 
   $('#gridify').hide();
   $('#gridify-config').show();
@@ -1558,7 +1584,20 @@ $(document).ready(function(){
   $('#gridify-resolution').on('change', fetchGrid);
   $('#parse-grid').on('click', function() {
     $('#gridify-config').hide();
-    parseGrid();
+    $('#parse-grid').hide();
+    $('#overlay').show().css('display', 'block');
+    parseGrid(function() {
+      $('#solve-crossword').show().css('display', 'inline-block');
+      $('#solve-crossword-config').show();
+      $('#overlay').hide();
+    });
+  });
+  $('#solve-crossword').on('click', function() {
+    if ($('#solve-crossword-clues').val()) {
+      $('#solve-crossword').hide();
+      $('#solve-crossword-config').hide();
+      solveCrossword();
+    }
   });
 
   $editArea=$("#edit-area").disableSelection();

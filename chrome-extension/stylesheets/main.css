@@ -95,6 +95,14 @@ input[type=password] {
     width: 150px;
     -webkit-border-radius:6px;
 }
+#tool-panel #solve-crossword {
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 20px;
+    padding:2px 7px;
+    width: 150px;
+    -webkit-border-radius:6px;
+}
 #tool-panel #rectangle { border-left:1px solid #efefef; }
 #tool-panel #text { border-right:1px solid #c1c1c1; }
 #tool-panel #color { -webkit-border-top-right-radius:6px; -webkit-border-bottom-right-radius:6px; position:relative; padding-right:6px; border-left:1px solid #efefef; margin-right:10px; }
@@ -109,7 +117,7 @@ input[type=password] {
     font-size:14px;
     line-height:20px;
 }
-#tool-panel #done, #tool-panel #cancel, #tool-panel #gridify-config, #tool-panel #parse-grid { display:none; }
+#tool-panel #done, #tool-panel #cancel, #tool-panel #gridify-config, #tool-panel #parse-grid, #tool-panel #solve-crossword, #tool-panel #solve-crossword-config { display:none; }
 #tool-panel #done { margin-right:20px; font-size:13px !important; font-weight:bold; }
 #tool-panel>div>a#save {
     margin-left:40px;
@@ -296,6 +304,7 @@ li#diigo_web_highlighter:hover a {
 
 #gridify b { background-position:-20px 0; }
 #parse-grid b { background-position:-180px -40px; }
+#solve-crossword b { background-position:-280px -40px; }
 #rectangle span { background-position:-20px 0; }
 #ro-rectangle span {background-position:-20px 0; }
 #ellipse span { background-position:-40px 0; }
@@ -403,6 +412,21 @@ body.crop #edit-area div[contenteditable] { display:none; } /* add 'body' to ove
 }
 
 #gridify-config div{
+    margin-right: 10px;
+    display: inline;
+}
+
+#solve-crossword-config{
+    position: absolute;
+    border-radius: 3px;
+    margin-left: 10px;
+    color: #ffffff;
+    font: normal 14px/16px arial, Helvetica;
+    right: 10px;
+    top: 10px;
+}
+
+#solve-crossword-config div{
     margin-right: 10px;
     display: inline;
 }

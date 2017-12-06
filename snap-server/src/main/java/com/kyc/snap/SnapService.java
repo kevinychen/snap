@@ -25,6 +25,10 @@ public interface SnapService {
     ParsedGrid parseGrid(ParseGridRequest request);
 
     @POST
+    @Path("solveCrossword")
+    ParsedGrid solveCrossword(SolveCrosswordRequest request);
+
+    @POST
     @Path("export/googleSheets")
     String exportToGoogleSheets(ExportToGoogleSheetsRequest request);
 }

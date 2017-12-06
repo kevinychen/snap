@@ -72,7 +72,7 @@ class CrosswordManager {
                     }
                 }
             }
-        return numCorrectClueIndices > confidence * clueIndex
+        return numCorrectClueIndices >= confidence * clueIndex
                 ? Optional.of(new CrosswordGrid(blanks))
                 : Optional.empty();
     }
@@ -123,6 +123,10 @@ class CrosswordManager {
         }
         removeCommonPrefixes(clues);
         return new CrosswordCluesList(clues);
+    }
+
+    ParsedGrid solveCrossword(ParsedGrid parsedGrid, CrosswordGrid crosswordGrid, CrosswordCluesList clues) {
+        return null; // TODO
     }
 
     private boolean isAcrossStart(BinaryParsedSquare[][] squares, int row, int col) {

@@ -21,16 +21,20 @@
   </head>
   <body class="edit_page">
     <div id="overlay">
-      <div id="overlay-text">Loading image...</div>
+      <div id="overlay-text">Loading...</div>
     </div>
     <div id="tool-panel">
       <a id="logo" style="" href="https://github.com/kevinychen/snap" target="_blank">Snap</a>
       <div id="annotation_bar">
         <a id="gridify" class="title enabled"><b></b>Overlay grid</a>
         <a id="parse-grid" class="title enabled"><b></b>Parse grid contents</a>
+        <a id="solve-crossword" class="title enabled"><b></b>Solve crossword</a>
         <div id="gridify-config">
           <div>Threshold:<input id="gridify-threshold" type="text" class="cd-input" value=32></div>
           <div>Resolution:<input id="gridify-resolution" type="text" class="cd-input" value=16></div>
+        </div>
+        <div id="solve-crossword-config">
+          <div><textarea id="solve-crossword-clues" rows="25" cols="50">Enter clues here</textarea></div>
         </div>
         <a id="save" class="title enabled"><b></b>Done</a>
         <a id="done" class="title enabled"><b></b>Crop</a>
