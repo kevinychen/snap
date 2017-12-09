@@ -68,7 +68,7 @@ class CrosswordManager {
                         downLen++;
                     if (downLen > 1) {
                         blanks.add(new CrosswordBlank(new CrosswordCluePosition(clueNumber, CrosswordClueOrientation.DOWN),
-                            row, col, acrossLen));
+                            row, col, downLen));
                     }
                 }
             }
@@ -104,17 +104,19 @@ class CrosswordManager {
         List<CrosswordClue> clues = new ArrayList<>();
         for (String line : cluesString.split("\n")) {
             line = line.trim();
+            if (line.equalsIgnoreCase("ACROSS") || line.equalsIgnoreCase("DOWN"))
+                continue;
             Matcher matcher = NUMBER_PATTERN.matcher(line);
             if (matcher.find()) {
                 long nextNumber = Long.parseLong(matcher.group());
-                if (nextNumber < currNumber)
-                    downClues = true;
                 if (currNumber != -1) {
                     clues.add(new CrosswordClue(
                         new CrosswordCluePosition(String.valueOf(currNumber),
                             (downClues ? CrosswordClueOrientation.DOWN : CrosswordClueOrientation.ACROSS)),
                         Joiner.on(" ").join(currentClue)));
                 }
+                if (nextNumber < currNumber)
+                    downClues = true;
                 currNumber = nextNumber;
                 currentClue.clear();
                 line = line.substring(matcher.group().length());
@@ -163,7 +165,14 @@ class CrosswordManager {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setDoOutput(true);
             connection.setRequestMethod("POST");
+            connection.setRequestProperty("Accept",
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+            connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
+            connection.setRequestProperty("Cache-Control", "max-age=0");
+            connection.setRequestProperty("Connection", "keep-alive");
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            connection.setRequestProperty("User-Agent",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36");
             try (PrintWriter writer = new PrintWriter(connection.getOutputStream())) {
                 writer.print(String.format(
                     "clue=%1$s&pattern=%2$s&phrase=%1$s&anagram-patt=%2$s&anagram-len=&roman-num=&vand=1&rejected=&cks=&ishm=&mvr=&ty=0",
