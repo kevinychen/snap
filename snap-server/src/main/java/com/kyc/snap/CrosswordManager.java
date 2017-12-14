@@ -7,8 +7,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,7 +21,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
 import com.kyc.snap.CrosswordCluePosition.CrosswordClueOrientation;
@@ -31,6 +36,12 @@ import lombok.Data;
 class CrosswordManager {
 
     private static final Pattern NUMBER_PATTERN = Pattern.compile("^[0-9]+");
+
+    private final DictionaryManager dictionaryManager;
+
+    CrosswordManager(DictionaryManager dictionaryManager) {
+        this.dictionaryManager = dictionaryManager;
+    }
 
     Optional<CrosswordGrid> toCrosswordGrid(ParsedGrid parsedGrid, double confidence) {
         BinaryParsedSquare[][] squares = new BinaryParsedSquare[parsedGrid.getNumRows()][parsedGrid.getNumCols()];
@@ -128,7 +139,123 @@ class CrosswordManager {
     }
 
     ParsedGrid solveCrossword(ParsedGrid parsedGrid, CrosswordGrid crosswordGrid, CrosswordCluesList clues) {
-        return null; // TODO
+        Map<CrosswordCluePosition, CrosswordBlank> blanks = crosswordGrid.getBlanks().stream()
+                .collect(Collectors.toMap(CrosswordBlank::getPosition, blank -> blank));
+        List<List<CrosswordClueResult>> results = new ArrayList<>();
+        for (CrosswordClue clue : clues.getClues()) {
+            CrosswordBlank blank = blanks.get(clue.getPosition());
+            results.add(solveClue(clue.getClue(), blank.getLength()));
+        }
+
+        Multimap<Pos, CluePos> allCluePoses = ArrayListMultimap.create();
+        for (int i = 0; i < clues.getClues().size(); i++) {
+            CrosswordBlank blank = blanks.get(clues.getClues().get(i).getPosition());
+            for (int letterIndex = 0; letterIndex < blank.getLength(); letterIndex++) {
+                int row = blank.getRow();
+                int col = blank.getCol();
+                if (blank.getPosition().getOrientation() == CrosswordClueOrientation.ACROSS)
+                    col += letterIndex;
+                else
+                    row += letterIndex;
+                allCluePoses.put(new Pos(row, col), new CluePos(i, letterIndex));
+            }
+        }
+
+        double[][][] allLetterProbs = new double[parsedGrid.getNumRows()][parsedGrid.getNumCols()][26];
+        for (int row = 0; row < parsedGrid.getNumRows(); row++)
+            for (int col = 0; col < parsedGrid.getNumCols(); col++)
+                for (int letter = 0; letter < 26; letter++)
+                    allLetterProbs[row][col][letter] = 1. / 26;
+        for (int iteration = 0; iteration < 4; iteration++) {
+            List<List<WordProb>> allWordProbs = new ArrayList<>();
+            for (int i = 0; i < clues.getClues().size(); i++) {
+                CrosswordBlank blank = blanks.get(clues.getClues().get(i).getPosition());
+                int length = blank.getLength();
+
+                List<WordProb> wordProbs = dictionaryManager.getWordsWithLength(length).stream()
+                    .map(word -> {
+                        double prob = 1;
+                        for (int letterIndex = 0; letterIndex < length; letterIndex++) {
+                            int row = blank.getRow();
+                            int col = blank.getCol();
+                            if (blank.getPosition().getOrientation() == CrosswordClueOrientation.ACROSS)
+                                col += letterIndex;
+                            else
+                                row += letterIndex;
+                            prob *= allLetterProbs[row][col][word.charAt(letterIndex) - 'A'];
+                        }
+                        return new WordProb(word, prob);
+                    })
+                    .collect(Collectors.toList());
+                wordProbs.add(new WordProb("*", Math.max(0, 1 - wordProbs.stream().mapToDouble(WordProb::getProb).sum())));
+
+                Map<String, Double> mults = new HashMap<>();
+                for (CrosswordClueResult result : results.get(i))
+                    mults.put(result.getAnswer(), 8 * Math.pow(4, result.getConfidence()));
+                mults.put("*", Math.pow(0.5, length));
+                wordProbs = wordProbs.stream()
+                        .map(wordProb -> new WordProb(wordProb.word, wordProb.prob * mults.getOrDefault(wordProb.word, 1.)))
+                        .collect(Collectors.toList());
+
+                double totalProb = wordProbs.stream().mapToDouble(WordProb::getProb).sum() + 1e-12;
+                wordProbs = wordProbs.stream()
+                    .map(wordProb -> new WordProb(wordProb.word, wordProb.prob / totalProb))
+                    .collect(Collectors.toList());
+                allWordProbs.add(wordProbs);
+            }
+
+            for (int row = 0; row < parsedGrid.getNumRows(); row++)
+                for (int col = 0; col < parsedGrid.getNumCols(); col++)
+                    for (int letter = 0; letter < 26; letter++)
+                        allLetterProbs[row][col][letter] = 1;
+            for (int row = 0; row < parsedGrid.getNumRows(); row++)
+                for (int col = 0; col < parsedGrid.getNumCols(); col++) {
+                    Collection<CluePos> cluePoses = allCluePoses.get(new Pos(row, col));
+                    for (CluePos cluePos : cluePoses) {
+                        double[] letterProbs = new double[26];
+                        for (WordProb wordProb : allWordProbs.get(cluePos.clueIndex))
+                            if (wordProb.word.equals("*"))
+                                for (int letter = 0; letter < 26; letter++)
+                                    letterProbs[letter] += wordProb.prob / 26;
+                            else
+                                letterProbs[wordProb.word.charAt(cluePos.letterIndex) - 'A'] += wordProb.prob;
+                        for (int letter = 0; letter < 26; letter++)
+                            allLetterProbs[row][col][letter] *= letterProbs[letter];
+                    }
+                }
+            for (int row = 0; row < parsedGrid.getNumRows(); row++)
+                for (int col = 0; col < parsedGrid.getNumCols(); col++) {
+                    double totalLetterProb = 0;
+                    for (int letter = 0; letter < 26; letter++)
+                        totalLetterProb += allLetterProbs[row][col][letter];
+                    for (int letter = 0; letter < 26; letter++)
+                        allLetterProbs[row][col][letter] /= totalLetterProb;
+                }
+        }
+        List<ParsedGridSquare> squares = parsedGrid.getSquares().stream()
+                .map(square -> {
+                    int row = square.getRow();
+                    int col = square.getCol();
+                    int bestLetter = -1;
+                    for (int letter = 0; letter < 26; letter++)
+                        if (bestLetter == -1 || allLetterProbs[row][col][letter] > allLetterProbs[row][col][bestLetter])
+                            bestLetter = letter;
+                    String text;
+                    if (allLetterProbs[row][col][bestLetter] > 0.1)
+                        text = String.valueOf((char) (bestLetter + 'A'));
+                    else if (allLetterProbs[row][col][bestLetter] > 0.05)
+                        text = String.valueOf((char) (bestLetter + 'a'));
+                    else
+                        text = "";
+                    ParsedGridSquare newSquare = new ParsedGridSquare(row, col);
+                    newSquare.setRgb(square.getRgb());
+                    newSquare.setText(text);
+                    newSquare.setRightBorderRgb(square.getRightBorderRgb());
+                    newSquare.setBottomBorderRgb(square.getBottomBorderRgb());
+                    return newSquare;
+                })
+                .collect(Collectors.toList());
+        return new ParsedGrid(parsedGrid.getNumRows(), parsedGrid.getNumCols(), squares);
     }
 
     private boolean isAcrossStart(BinaryParsedSquare[][] squares, int row, int col) {
@@ -161,6 +288,10 @@ class CrosswordManager {
 
     private List<CrosswordClueResult> solveClue(String clue, int numLetters) {
         try {
+            // TODO find website that doesn't rate limit and require waiting 9s between each query
+            Thread.sleep(9000);
+            System.out.println("Solving clue: " + clue);
+
             URL url = new URL("http://www.wordplays.com/crossword-solver");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setDoOutput(true);
@@ -187,7 +318,7 @@ class CrosswordManager {
                     return new CrosswordClueResult(answer, numStars);
                 })
                 .collect(Collectors.toList());
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -198,5 +329,23 @@ class CrosswordManager {
         boolean light = false;
         boolean rightBorderLight = false;
         boolean bottomBorderLight = false;
+    }
+
+    @Data
+    private static class Pos {
+        private final int row;
+        private final int col;
+    }
+
+    @Data
+    private static class CluePos {
+        private final int clueIndex;
+        private final int letterIndex;
+    }
+
+    @Data
+    private static class WordProb {
+        private final String word;
+        private final double prob;
     }
 }

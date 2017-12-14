@@ -756,7 +756,8 @@ function solveCrossword(cb) {
     }),
     processData: false,
     success: function(result) {
-      console.log(result); // TODO
+      parsedGrid = result;
+      paintParsedGrid(result.squares);
       if (cb) {
         cb();
       }
