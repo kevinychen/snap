@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<schema name="snap" version="1.6">
+    <!-- docValues are enabled by default for long type so we don't need to index the version field  -->
+    <field name="_version_" type="long" indexed="false" stored="false"/>
+    <field name="clue" type="crossword_clue" required="true"/>
+    <field name="answer" type="crossword_answer" required="true"/>
+    <field name="length" type="int" required="true"/>
+
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" docValues="true"/>
+    <fieldType name="int" class="solr.IntPointField" docValues="true"/>
+    <fieldType name="long" class="solr.LongPointField" docValues="true"/>
+
+    <fieldType name="crossword_clue" class="solr.TextField" required="true">
+        <analyzer>
+            <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+            <filter class="solr.ASCIIFoldingFilterFactory" preserveOriginal="true"/>
+            <filter class="solr.SynonymGraphFilterFactory" synonyms="synonyms.txt" ignoreCase="true"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+            <filter class="solr.HyphenatedWordsFilterFactory"/>
+            <filter class="solr.WordDelimiterGraphFilterFactory"
+                splitOnCaseChange="0"
+                splitOnNumerics="0"
+                catenateWords="1"
+                preserveOriginal="1"
+                stemEnglishPossessive="0"
+                types="wdftypes.txt"
+                />
+            <filter class="solr.FlattenGraphFilterFactory"/> <!-- required on index analyzers after graph filters -->
+        </analyzer>
+    </fieldType>
+    <fieldType name="crossword_answer" class="solr.TextField" required="true">
+        <analyzer>
+            <tokenizer class="solr.StandardTokenizerFactory"/>
+            <filter class="solr.ASCIIFoldingFilterFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+    </fieldType>
+</schema>
